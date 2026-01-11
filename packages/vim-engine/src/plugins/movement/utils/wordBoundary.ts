@@ -139,11 +139,7 @@ export function findNextWordStart(line: string, column: number): number | null {
     while (i < length && isWordChar(line[i])) {
       i++;
     }
-    // Check if there's punctuation immediately after the word
-    if (i < length && !isWhitespace(line[i])) {
-      return i; // Return punctuation position
-    }
-    // No punctuation after word, skip to next word
+    // Skip any punctuation and continue to next word
     while (i < length && !isWordChar(line[i])) {
       i++;
     }
@@ -307,7 +303,6 @@ export function findPreviousWordStart(line: string, column: number): number | nu
  * ```
  */
 export function findPreviousWordEnd(line: string, column: number): number | null {
-  debugger;
   if (column <= 0) {
     return null;
   }

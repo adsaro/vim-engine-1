@@ -86,7 +86,7 @@ const COMMAND_GROUPS: CommandGroup[] = [
 ];
 
 export function CommandPalette() {
-  const { vimState, handleKeystroke } = useVim();
+  const { vimState } = useVim();
   const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState(0);
 
