@@ -1,8 +1,20 @@
 {
   "name": "vim-engine-1",
-  "private": true,
-  "version": "0.0.0",
+  "version": "0.0.1",
   "type": "module",
+  "main": "./dist/vim-engine-1.umd.js",
+  "module": "./dist/vim-engine-1.es.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/vim-engine-1.es.js",
+      "require": "./dist/vim-engine-1.umd.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
@@ -10,7 +22,12 @@
   },
   "devDependencies": {
     "@types/node": "^25.0.6",
+    "@types/rx": "^4.1.4",
     "typescript": "~5.9.3",
-    "vite": "^7.2.4"
+    "vite": "^7.2.4",
+    "vite-plugin-dts": "^4.5.4"
+  },
+  "dependencies": {
+    "rxjs": "^7.8.1"
   }
 }

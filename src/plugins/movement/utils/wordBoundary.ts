@@ -1,0 +1,521 @@
+/**
+ * Word Boundary Utilities
+ *
+ * Provides character classification and word boundary detection functions
+ * for movement plugin operations.
+ */
+
+/**
+ * Character classification types
+ */
+export type CharType = 'word' | 'whitespace' | 'punctuation' | 'other';
+
+/**
+ * Check if a character is a word character
+ *
+ * Word characters are alphanumeric characters (a-z, A-Z, 0-9) and underscore (_).
+ *
+ * @param char - The character to check
+ * @returns True if the character is a word character
+ *
+ * @example
+ * ```typescript
+ * isWordChar('a');  // true
+ * isWordChar('Z');  // true
+ * isWordChar('5');  // true
+ * isWordChar('_');  // true
+ * isWordChar(' ');  // false
+ * isWordChar('.');  // false
+ * ```
+ */
+export function isWordChar(char: string): boolean {
+  if (char.length !== 1) {
+    return false;
+  }
+  return /[a-zA-Z0-9_]/.test(char);
+}
+
+/**
+ * Check if a character is whitespace
+ *
+ * Whitespace includes spaces, tabs, and other Unicode whitespace characters.
+ *
+ * @param char - The character to check
+ * @returns True if the character is whitespace
+ *
+ * @example
+ * ```typescript
+ * isWhitespace(' ');   // true
+ * isWhitespace('\t');  // true
+ * isWhitespace('\n');  // true
+ * isWhitespace('a');   // false
+ * ```
+ */
+export function isWhitespace(char: string): boolean {
+  if (char.length !== 1) {
+    return false;
+  }
+  return /\s/.test(char);
+}
+
+/**
+ * Check if a character is punctuation
+ *
+ * Punctuation characters are non-word, non-whitespace characters.
+ *
+ * @param char - The character to check
+ * @returns True if the character is punctuation
+ *
+ * @example
+ * ```typescript
+ * isPunctuation('.');  // true
+ * isPunctuation(',');  // true
+ * isPunctuation('!');  // true
+ * isPunctuation('a');  // false
+ * isPunctuation(' ');  // false
+ * ```
+ */
+export function isPunctuation(char: string): boolean {
+  if (char.length !== 1) {
+    return false;
+  }
+  return !isWordChar(char) && !isWhitespace(char);
+}
+
+/**
+ * Classify a character type
+ *
+ * @param char - The character to classify
+ * @returns The character type: 'word', 'whitespace', 'punctuation', or 'other'
+ *
+ * @example
+ * ```typescript
+ * classifyChar('a');   // 'word'
+ * classifyChar(' ');   // 'whitespace'
+ * classifyChar('.');   // 'punctuation'
+ * ```
+ */
+export function classifyChar(char: string): CharType {
+  if (char.length !== 1) {
+    return 'other';
+  }
+  if (isWhitespace(char)) {
+    return 'whitespace';
+  }
+  if (isWordChar(char)) {
+    return 'word';
+  }
+  return 'punctuation';
+}
+
+/**
+ * Find the start of the next word
+ *
+ * Searches forward from the given column position to find the start
+ * of the next word. A word is defined as a sequence of word characters
+ * preceded by either whitespace or the start of the line.
+ *
+ * @param line - The line content to search
+ * @param column - The starting column position
+ * @returns The column index of the next word start, or null if not found
+ *
+ * @example
+ * ```typescript
+ * findNextWordStart('hello world', 0);  // 6 (start of 'world')
+ * findNextWordStart('hello world', 6);  // null (no more words)
+ * findNextWordStart('hello   world', 5); // 8 (start of 'world')
+ * ```
+ */
+export function findNextWordStart(line: string, column: number): number | null {
+  const length = line.length;
+  if (column < 0 || column >= length) {
+    return null;
+  }
+
+  let i = column;
+
+  // If on a word character, skip to end of current word
+  if (isWordChar(line[i])) {
+    while (i < length && isWordChar(line[i])) {
+      i++;
+    }
+    // Check if there's punctuation immediately after the word
+    if (i < length && !isWhitespace(line[i])) {
+      return i; // Return punctuation position
+    }
+    // No punctuation after word, skip to next word
+    while (i < length && !isWordChar(line[i])) {
+      i++;
+    }
+  } else {
+    // Not on a word character
+    // Skip whitespace and non-word characters
+    while (i < length && !isWordChar(line[i])) {
+      i++;
+    }
+  }
+
+  // Return position if we found a word start
+  return i < length && isWordChar(line[i]) ? i : null;
+}
+
+/**
+ * Find the end of the current or next word
+ *
+ * Searches forward from the given column position to find the end
+ * of the current word (if positioned on one) or the next word.
+ *
+ * @param line - The line content to search
+ * @param column - The starting column position
+ * @returns The column index of the word end, or null if not found
+ *
+ * @example
+ * ```typescript
+ * findWordEnd('hello world', 0);   // 4 (end of 'hello')
+ * findWordEnd('hello world', 6);   // 10 (end of 'world')
+ * findWordEnd('hello   world', 5); // 7 (end of 'world')
+ * ```
+ */
+export function findWordEnd(line: string, column: number): number | null {
+  const length = line.length;
+  if (column < 0 || column >= length) {
+    return null;
+  }
+
+  let i = column;
+  const currentChar = line[i];
+
+  if (isWhitespace(currentChar)) {
+    // Skip whitespace
+    while (i < length && isWhitespace(line[i])) {
+      i++;
+    }
+    // Skip word characters
+    while (i < length && isWordChar(line[i])) {
+      i++;
+    }
+    // Return end of word (one before current position)
+    return i > 0 ? i - 1 : null;
+  }
+
+  if (isWordChar(currentChar)) {
+    // Skip word characters
+    while (i < length && isWordChar(line[i])) {
+      i++;
+    }
+    // Check if at end of current word
+    if (i === length - 1 || !isWordChar(line[i + 1])) {
+      // At end of current word, find next word
+      i++;
+      // Skip whitespace and non-word characters
+      while (i < length && !isWordChar(line[i])) {
+        i++;
+      }
+      // Skip next word
+      while (i < length && isWordChar(line[i])) {
+        i++;
+      }
+      // Return end of word (one before current position)
+      return i > 0 ? i - 1 : null;
+    } else {
+      // In middle of word, move to end of current word
+      while (i < length && isWordChar(line[i])) {
+        i++;
+      }
+      // Return end of word
+      return i > 0 ? i - 1 : null;
+    }
+  }
+
+  // Punctuation - skip non-whitespace, non-word characters
+  while (i < length && !isWhitespace(line[i]) && !isWordChar(line[i])) {
+    i++;
+  }
+  while (i < length && isWhitespace(line[i])) {
+    i++;
+  }
+  while (i < length && isWordChar(line[i])) {
+    i++;
+  }
+  return i > 0 ? i - 1 : null;
+}
+
+/**
+ * Find the start of the previous word
+ *
+ * Searches backward from the given column position to find the start
+ * of the previous word.
+ *
+ * @param line - The line content to search
+ * @param column - The starting column position
+ * @returns The column index of the previous word start, or null if not found
+ *
+ * @example
+ * ```typescript
+ * findPreviousWordStart('hello world', 6);  // 0 (start of 'hello')
+ * findPreviousWordStart('hello world', 5);  // 0 (start of 'hello')
+ * findPreviousWordStart('hello   world', 8); // 8 (start of 'world')
+ * ```
+ */
+export function findPreviousWordStart(line: string, column: number): number | null {
+  if (column <= 0) {
+    return null;
+  }
+
+  let i = column - 1;
+
+  // Skip whitespace
+  while (i >= 0 && isWhitespace(line[i])) {
+    i--;
+  }
+  if (i < 0) {
+    return null;
+  }
+
+  if (isWordChar(line[i])) {
+    // Skip word characters backward
+    while (i >= 0 && isWordChar(line[i])) {
+      i--;
+    }
+    return i + 1;
+  }
+
+  // Skip punctuation backward
+  while (i >= 0 && !isWhitespace(line[i]) && !isWordChar(line[i])) {
+    i--;
+  }
+  return i + 1;
+}
+
+/**
+ * Find the end of the previous word
+ *
+ * Searches backward from the given column position to find the end
+ * of the previous word. The 'ge' motion in Vim moves to the end of
+ * the previous word.
+ *
+ * @param line - The line content to search
+ * @param column - The starting column position
+ * @returns The column index of the previous word end, or null if not found
+ *
+ * @example
+ * ```typescript
+ * findPreviousWordEnd('hello world', 6);   // 4 (end of 'hello')
+ * findPreviousWordEnd('hello   world', 8); // 4 (end of 'hello')
+ * findPreviousWordEnd('hello world', 5);   // 4 (end of 'hello')
+ * findPreviousWordEnd('one two three four', 18); // 12 (end of 'three')
+ * ```
+ */
+export function findPreviousWordEnd(line: string, column: number): number | null {
+  debugger;
+  if (column <= 0) {
+    return null;
+  }
+
+  let i = column - 1;
+
+  // Check if we're at or past the end of the line
+  if (column >= line.length) {
+    // Start from the last character
+    i = line.length - 1;
+    // This is the end of the last word on the line
+    return i;
+  }
+
+  // Check if we're at the end of a word
+  // (current position is a word char, and next is not a word char or end of line)
+  /* if (i >= 0 && isWordChar(line[i]) && (i + 1 >= line.length || !isWordChar(line[i + 1]))) {
+    // We're at the end of a word, return this position
+    return i;
+  } */
+
+  // We're in the middle of a word
+  // Go back to the start of this word
+  if (i >= 0 && isWordChar(line[i])) {
+    while (i >= 0 && isWordChar(line[i])) {
+      i--;
+    }
+  }
+
+  // Skip whitespace and non-word characters to find the previous word
+  while (i >= 0 && !isWordChar(line[i])) {
+    i--;
+  }
+
+  if (i < 0) {
+    return null;
+  }
+
+  // Now i is at the last character of the previous word
+  return i;
+}
+
+/**
+ * Find the start of the next WORD
+ *
+ * Searches forward from the given column position to find the start
+ * of the next WORD. A WORD is defined as a sequence of non-whitespace characters.
+ *
+ * @param line - The line content to search
+ * @param column - The starting column position
+ * @returns The column index of the next WORD start, or null if not found
+ *
+ * @example
+ * ```typescript
+ * findNextWORDStart('hello world', 0);  // 6 (start of 'world')
+ * findNextWORDStart('hello-world test', 0);  // 11 (start of 'test', treats 'hello-world' as one WORD)
+ * findNextWORDStart('hello   world', 5); // 8 (start of 'world')
+ * ```
+ */
+export function findNextWORDStart(line: string, column: number): number | null {
+  const length = line.length;
+  if (column < 0 || column >= length) {
+    return null;
+  }
+
+  let i = column;
+
+  // If on a non-whitespace character, skip to end of current WORD
+  if (!isWhitespace(line[i])) {
+    while (i < length && !isWhitespace(line[i])) {
+      i++;
+    }
+  }
+
+  // Skip whitespace
+  while (i < length && isWhitespace(line[i])) {
+    i++;
+  }
+
+  // Return position if we found a WORD start
+  return i < length && !isWhitespace(line[i]) ? i : null;
+}
+
+/**
+ * Find the end of the current or next WORD
+ *
+ * Searches forward from the given column position to find the end
+ * of the current WORD (if positioned on one) or the next WORD.
+ *
+ * @param line - The line content to search
+ * @param column - The starting column position
+ * @returns The column index of the WORD end, or null if not found
+ *
+ * @example
+ * ```typescript
+ * findNextWORDEnd('hello world', 0);   // 4 (end of 'hello')
+ * findNextWORDEnd('hello-world test', 0);   // 10 (end of 'hello-world')
+ * findNextWORDEnd('hello   world', 5); // 7 (end of 'world')
+ * ```
+ */
+export function findNextWORDEnd(line: string, column: number): number | null {
+  const length = line.length;
+  if (column < 0 || column >= length) {
+    return null;
+  }
+
+  let i = column;
+  const currentChar = line[i];
+
+  if (isWhitespace(currentChar)) {
+    // Skip whitespace
+    while (i < length && isWhitespace(line[i])) {
+      i++;
+    }
+    // Skip WORD characters
+    while (i < length && !isWhitespace(line[i])) {
+      i++;
+    }
+    // Return end of WORD (one before current position)
+    return i > 0 ? i - 1 : null;
+  }
+
+  if (!isWhitespace(currentChar)) {
+    // Skip WORD characters
+    while (i < length && !isWhitespace(line[i])) {
+      i++;
+    }
+    // Return end of WORD
+    return i > 0 ? i - 1 : null;
+  }
+
+  return null;
+}
+
+/**
+ * Find the start of the previous WORD
+ *
+ * Searches backward from the given column position to find the start
+ * of the previous WORD.
+ *
+ * @param line - The line content to search
+ * @param column - The starting column position
+ * @returns The column index of the previous WORD start, or null if not found
+ *
+ * @example
+ * ```typescript
+ * findPreviousWORDStart('hello world', 6);  // 0 (start of 'hello')
+ * findPreviousWORDStart('hello-world test', 11);  // 0 (start of 'hello-world')
+ * findPreviousWORDStart('hello   world', 8); // 8 (start of 'world')
+ * ```
+ */
+export function findPreviousWORDStart(line: string, column: number): number | null {
+  if (column <= 0) {
+    return null;
+  }
+
+  let i = column - 1;
+
+  // Skip whitespace
+  while (i >= 0 && isWhitespace(line[i])) {
+    i--;
+  }
+  if (i < 0) {
+    return null;
+  }
+
+  // Skip non-whitespace characters (WORD characters) backward
+  while (i >= 0 && !isWhitespace(line[i])) {
+    i--;
+  }
+  return i + 1;
+}
+
+/**
+ * Find the end of the previous WORD
+ *
+ * Searches backward from the given column position to find the end
+ * of the previous WORD.
+ *
+ * @param line - The line content to search
+ * @param column - The starting column position
+ * @returns The column index of the previous WORD end, or null if not found
+ *
+ * @example
+ * ```typescript
+ * findPreviousWORDEnd('hello world', 6);   // 4 (end of 'hello')
+ * findPreviousWORDEnd('hello-world test', 11);   // 10 (end of 'hello-world')
+ * findPreviousWORDEnd('hello   world', 8); // 4 (end of 'hello')
+ * ```
+ */
+export function findPreviousWORDEnd(line: string, column: number): number | null {
+  if (column <= 0) {
+    return null;
+  }
+
+  let i = column - 1;
+
+  // Skip whitespace at end
+  while (i >= 0 && isWhitespace(line[i])) {
+    i--;
+  }
+  if (i < 0) {
+    return null;
+  }
+
+  // Skip non-whitespace characters (WORD characters) backward
+  while (i >= 0 && !isWhitespace(line[i])) {
+    i--;
+  }
+  return i + 1;
+}
