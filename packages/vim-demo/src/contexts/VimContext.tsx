@@ -14,6 +14,12 @@ import {
   JMovementPlugin,
   KMovementPlugin,
   LMovementPlugin,
+  WordMovementPlugin,
+  CapitalWordMovementPlugin,
+  BackwardMovementPlugin,
+  CapitalBackwardMovementPlugin,
+  EMovementPlugin,
+  GeMovementPlugin,
   ExecutionContext,
 } from '@vim-engine/core';
 
@@ -74,13 +80,12 @@ export function VimProvider({ children, initialContent = '' }: VimProviderProps)
     engine.registerPlugin(new JMovementPlugin());
     engine.registerPlugin(new KMovementPlugin());
     engine.registerPlugin(new LMovementPlugin());
-    // TODO: Fix WordMovementPlugin and BackwardMovementPlugin instantiation
-    // engine.registerPlugin(new WordMovementPlugin());
-    // engine.registerPlugin(new CapitalWordMovementPlugin());
-    // engine.registerPlugin(new BackwardMovementPlugin());
-    // engine.registerPlugin(new CapitalBackwardMovementPlugin());
-    // engine.registerPlugin(new EMovementPlugin());
-    // engine.registerPlugin(new GeMovementPlugin());
+    engine.registerPlugin(new WordMovementPlugin());
+    engine.registerPlugin(new CapitalWordMovementPlugin());
+    engine.registerPlugin(new BackwardMovementPlugin());
+    engine.registerPlugin(new CapitalBackwardMovementPlugin());
+    engine.registerPlugin(new EMovementPlugin());
+    engine.registerPlugin(new GeMovementPlugin());
 
     engine.start();
 

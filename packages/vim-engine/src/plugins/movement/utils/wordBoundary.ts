@@ -195,15 +195,20 @@ export function findWordEnd(line: string, column: number): number | null {
   }
 
   if (isWordChar(currentChar)) {
-    // Skip word characters
-    while (i < length && isWordChar(line[i])) {
-      i++;
+    // First, check if we're already at the end of a word
+    // by looking ahead to see if the next character is a word character
+    let nextPos = i + 1;
+    while (nextPos < length && isWordChar(line[nextPos])) {
+      nextPos++;
     }
-    // Check if at end of current word
-    if (i === length - 1 || !isWordChar(line[i + 1])) {
-      // At end of current word, find next word
-      i++;
-      // Skip whitespace and non-word characters
+    
+    // If the current position is the last character of the word,
+    // we need to find the next word
+    if (i === nextPos - 1) {
+      // We're at the end of the current word, find next word
+      // Move past current position
+      i = nextPos;
+      // Skip non-word characters
       while (i < length && !isWordChar(line[i])) {
         i++;
       }
@@ -214,11 +219,12 @@ export function findWordEnd(line: string, column: number): number | null {
       // Return end of word (one before current position)
       return i > 0 ? i - 1 : null;
     } else {
-      // In middle of word, move to end of current word
+      // We're not at the end, just go to end of current word
+      // Skip to end of current word
       while (i < length && isWordChar(line[i])) {
         i++;
       }
-      // Return end of word
+      // Return end of word (one before current position)
       return i > 0 ? i - 1 : null;
     }
   }
