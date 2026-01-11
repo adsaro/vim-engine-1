@@ -1,0 +1,46 @@
+{
+  "name": "@vim-engine/core",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "./dist/vim-engine-core.umd.js",
+  "module": "./dist/vim-engine-core.es.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/vim-engine-core.es.js",
+      "require": "./dist/vim-engine-core.umd.js"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "dev": "vite build --watch",
+    "build": "tsc && vite build",
+    "test": "vitest run",
+    "test:watch": "vitest watch",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest run --coverage",
+    "lint": "eslint src --ext .ts",
+    "lint:fix": "eslint src --ext .ts --fix",
+    "clean": "rm -rf dist"
+  },
+  "devDependencies": {
+    "@types/node": "^25.0.6",
+    "@types/rx": "^4.1.4",
+    "@typescript-eslint/eslint-plugin": "^8.18.2",
+    "@typescript-eslint/parser": "^8.18.2",
+    "@vitest/ui": "^2.1.8",
+    "eslint": "^9.17.0",
+    "typescript": "~5.9.3",
+    "vite": "^7.2.4",
+    "vite-plugin-dts": "^4.5.4",
+    "vitest": "^2.1.8"
+  },
+  "dependencies": {
+    "rxjs": "^7.8.1"
+  },
+  "peerDependencies": {},
+  "publishConfig": {
+    "access": "public"
+  }
+}
