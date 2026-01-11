@@ -10,3 +10,6 @@ export * from './plugin';
 export * from './state';
 export * from './input';
 export * from './plugins';
+
+// Re-export VimExecutor as VimEngine for backwards compatibility with demo
+export { VimExecutor as VimEngine } from './core/VimExecutor';
