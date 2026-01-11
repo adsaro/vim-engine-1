@@ -85,7 +85,6 @@ export class GeMovementPlugin extends WordMovementPlugin {
    * @returns The column index of the previous word end, or null if not found
    */
   protected findBoundary(line: string, column: number): number | null {
-    console.log('=================================');
     return findPreviousWordEnd(line, column);
   }
 }

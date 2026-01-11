@@ -15,6 +15,7 @@
  * @see WordMovementPlugin For the base class
  */
 import { WordMovementPlugin } from '../base/WordMovementPlugin';
+import { MovementConfig } from '../base/MovementPlugin';
 import { findPreviousWordStart } from '../utils/wordBoundary';
 import { VIM_MODE, VimMode } from '../../../state/VimMode';
 
@@ -50,6 +51,21 @@ export class BMovementPlugin extends WordMovementPlugin {
    * Modes this plugin is active in
    */
   readonly modes: VimMode[] = [VIM_MODE.NORMAL, VIM_MODE.VISUAL];
+
+  /**
+   * Create a new BMovementPlugin instance
+   *
+   * @param config - Optional movement configuration
+   */
+  constructor(config?: MovementConfig) {
+    super(
+      'movement-b',
+      'Move cursor to start of previous word (b key)',
+      'b',
+      [VIM_MODE.NORMAL, VIM_MODE.VISUAL],
+      config
+    );
+  }
 
   /**
    * Get the movement direction

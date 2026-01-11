@@ -16,6 +16,7 @@
  * @see WordMovementPlugin For the base class
  */
 import { WordMovementPlugin } from '../base/WordMovementPlugin';
+import { MovementConfig } from '../base/MovementPlugin';
 import { findWordEnd } from '../utils/wordBoundary';
 import { VIM_MODE, VimMode } from '../../../state/VimMode';
 
@@ -51,6 +52,21 @@ export class EMovementPlugin extends WordMovementPlugin {
    * Modes this plugin is active in
    */
   readonly modes: VimMode[] = [VIM_MODE.NORMAL, VIM_MODE.VISUAL];
+
+  /**
+   * Create a new EMovementPlugin instance
+   *
+   * @param config - Optional movement configuration
+   */
+  constructor(config?: MovementConfig) {
+    super(
+      'movement-e',
+      'Move cursor to end of current/next word (e key)',
+      'e',
+      [VIM_MODE.NORMAL, VIM_MODE.VISUAL],
+      config
+    );
+  }
 
   /**
    * Get the movement direction
