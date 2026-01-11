@@ -3,4 +3,4 @@
  */
 export * from './MovementPlugin';
 export * from './DirectionalMovementPlugin';
-export * from './WordMovementPlugin';
+export { WordMovementPlugin as AbstractWordMovementPlugin } from './WordMovementPlugin';

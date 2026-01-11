@@ -63,14 +63,8 @@ export function Editor() {
       if (textareaRef.current.scrollLeft !== scrollInfo.scrollLeft) {
         textareaRef.current.scrollLeft = scrollInfo.scrollLeft;
       }
-
-      setViewportInfo((prev) => ({
-        ...prev,
-        scrollTop: textareaRef.current?.scrollTop || 0,
-        scrollLeft: textareaRef.current?.scrollLeft || 0,
-      }));
     }
-  }, [vimState.cursor, viewportInfo]);
+  }, [vimState.cursor.line, vimState.cursor.column, viewportInfo.viewportHeight, viewportInfo.viewportWidth]);
 
   // Focus editor on click
   const handleContainerClick = useCallback(() => {
@@ -158,6 +152,7 @@ export function Editor() {
           value={content}
           onKeyDown={handleKeyDown}
           onScroll={handleScroll}
+          readOnly
           className="w-full h-full bg-gray-900 text-gray-100 font-mono resize-none outline-none p-2"
           style={{
             fontFamily: 'monospace',
