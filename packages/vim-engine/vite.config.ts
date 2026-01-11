@@ -7,6 +7,7 @@ export default defineConfig({
     dts({
       insertTypesEntry: true,
       rollupTypes: true,
+      tsconfigPath: './tsconfig.json',
     }),
   ],
   build: {
@@ -27,11 +28,5 @@ export default defineConfig({
     },
     sourcemap: true,
     minify: false, // Keep readable for debugging
-  },
-  test: {
-    globals: true,
-    environment: 'node',
-    include: ['src/**/*.test.ts', 'tests/**/*.test.ts'],
-    exclude: ['node_modules', 'dist'],
   },
 });
