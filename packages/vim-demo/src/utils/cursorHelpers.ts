@@ -17,6 +17,7 @@ export interface ViewportInfo {
   viewportWidth: number;
   lineHeight: number;
   charWidth: number;
+  paddingLeft?: number;  // Textarea left padding to account for in cursor positioning
 }
 
 /**
@@ -40,7 +41,8 @@ export function calculateCursorRect(
   
   // Calculate position
   const top = (line * viewportInfo.lineHeight) - viewportInfo.scrollTop;
-  const left = (charCount * viewportInfo.charWidth) - viewportInfo.scrollLeft;
+  // Add paddingLeft to account for textarea padding
+  const left = (charCount * viewportInfo.charWidth) - viewportInfo.scrollLeft + (viewportInfo.paddingLeft || 0);
   
   return {
     top: Math.max(0, top),
