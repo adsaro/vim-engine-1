@@ -5,6 +5,7 @@ import { calculateCursorRect, calculateScrollToCursor, ViewportInfo } from '../u
 
 const LINE_HEIGHT = 24;
 const CHAR_WIDTH = 8.4; // Approximate monospace character width
+const TEXTAREA_PADDING_LEFT = 8; // Padding on the textarea
 
 export function Editor() {
   const { vimState, content, handleKeyDown } = useVim();
@@ -15,6 +16,7 @@ export function Editor() {
     viewportWidth: 800,
     lineHeight: LINE_HEIGHT,
     charWidth: CHAR_WIDTH,
+    paddingLeft: TEXTAREA_PADDING_LEFT,
   });
 
   const containerRef = useRef<HTMLDivElement>(null);
