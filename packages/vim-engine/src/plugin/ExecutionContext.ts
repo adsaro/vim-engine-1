@@ -357,4 +357,33 @@ export class ExecutionContext {
   getLineNumber(): number {
     return this.state.cursor.line;
   }
+
+  /**
+   * Get the current count for command repetition
+   *
+   * @returns {number} The current count (default 1 if not set)
+   *
+   * @example
+   * ```typescript
+   * const count = context.getCount();
+   * ```
+   */
+  getCount(): number {
+    return this.state.count || 1;
+  }
+
+  /**
+   * Set the count for command repetition
+   *
+   * @param count - The count to set
+   * @returns {void}
+   *
+   * @example
+   * ```typescript
+   * context.setCount(5);
+   * ```
+   */
+  setCount(count: number): void {
+    this.state.count = count;
+  }
 }

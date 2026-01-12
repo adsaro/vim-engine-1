@@ -69,6 +69,7 @@ export class VimState {
   private _buffer: TextBuffer;
   private _cursor: CursorPosition;
   private _mode: VimMode;
+  private _count: number;
 
   /**
    * Register storage - maps register names to content
@@ -127,6 +128,7 @@ export class VimState {
     }
     this._cursor = new CursorPosition();
     this._mode = VIM_MODE.NORMAL;
+    this._count = 0;
     this.registers = {};
     this.markPositions = {};
     this.jumpList = [];
@@ -222,6 +224,34 @@ export class VimState {
   }
 
   /**
+   * Get the count for command repetition
+   *
+   * @returns {number} The current count (0 if not set)
+   *
+   * @example
+   * ```typescript
+   * const count = state.count;
+   * ```
+   */
+  get count(): number {
+    return this._count;
+  }
+
+  /**
+   * Set the count for command repetition
+   *
+   * @param value - The count to set
+   *
+   * @example
+   * ```typescript
+   * state.count = 5;
+   * ```
+   */
+  set count(value: number) {
+    this._count = value;
+  }
+
+  /**
    * Add a jump to the jump list
    *
    * Records the current position for jump navigation (Ctrl-O/Ctrl-I).
@@ -301,6 +331,7 @@ export class VimState {
     const cloned = new VimState(this._buffer.clone());
     cloned._cursor = this._cursor.clone();
     cloned._mode = this._mode;
+    cloned._count = this._count;
     cloned.registers = { ...this.registers };
 
     // Deep clone mark positions
@@ -337,6 +368,7 @@ export class VimState {
     this._buffer = new TextBuffer();
     this._cursor = new CursorPosition();
     this._mode = VIM_MODE.NORMAL;
+    this._count = 0;
     this.registers = {};
     this.markPositions = {};
     this.jumpList = [];

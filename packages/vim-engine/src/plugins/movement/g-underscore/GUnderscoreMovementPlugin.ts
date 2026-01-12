@@ -14,7 +14,7 @@
  */
 import { LineMovementPlugin } from '../base/LineMovementPlugin';
 import { CursorPosition } from '../../../state/CursorPosition';
-import { VIM_MODE } from '../../../state/VimMode';
+import { VimMode, VIM_MODE } from '../../../state/VimMode';
 import { findLastNonWhitespace } from '../utils/lineUtils';
 
 /**
@@ -46,7 +46,7 @@ export class GUnderscoreMovementPlugin extends LineMovementPlugin {
   readonly version = '1.0.0';
   readonly description = 'Move to last non-blank character (g_ key)';
   readonly patterns = ['g_'];
-  readonly modes: VIM_MODE[] = [VIM_MODE.NORMAL, VIM_MODE.VISUAL];
+  readonly modes: VimMode[] = [VIM_MODE.NORMAL, VIM_MODE.VISUAL];
 
   /**
    * Create a new GUnderscoreMovementPlugin
@@ -72,7 +72,7 @@ export class GUnderscoreMovementPlugin extends LineMovementPlugin {
    */
   protected calculateLinePosition(
     line: string,
-    cursor: CursorPosition
+    _cursor: CursorPosition
   ): number {
     const lastNonWhitespace = findLastNonWhitespace(line);
     return lastNonWhitespace !== null ? lastNonWhitespace : 0;
