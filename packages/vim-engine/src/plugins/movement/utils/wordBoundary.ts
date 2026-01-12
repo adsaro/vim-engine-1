@@ -11,6 +11,30 @@
 export type CharType = 'word' | 'whitespace' | 'punctuation' | 'other';
 
 /**
+ * Get character type
+ *
+ * Returns the character type as a string:
+ * - 'whitespace': Whitespace characters
+ * - 'word': Word characters (alphanumeric + underscore)
+ * - 'punctuation': Punctuation/symbol characters
+ *
+ * @param char - The character to classify
+ * @returns The character type ('word', 'whitespace', or 'punctuation')
+ *
+ * @example
+ * ```typescript
+ * getCharType('a');  // 'word'
+ * getCharType(' ');  // 'whitespace'
+ * getCharType('.');  // 'punctuation'
+ * ```
+ */
+export function getCharType(char: string): CharType {
+  if (/\s/.test(char)) return 'whitespace';
+  if (/[\w]/.test(char)) return 'word'; // \w matches [A-Za-z0-9_]
+  return 'punctuation';
+}
+
+/**
  * Check if a character is a word character
  *
  * Word characters are alphanumeric characters (a-z, A-Z, 0-9) and underscore (_).
@@ -32,7 +56,7 @@ export function isWordChar(char: string): boolean {
   if (char.length !== 1) {
     return false;
   }
-  return /[a-zA-Z0-9_]/.test(char);
+  return getCharType(char) === 'word';
 }
 
 /**
@@ -55,7 +79,7 @@ export function isWhitespace(char: string): boolean {
   if (char.length !== 1) {
     return false;
   }
-  return /\s/.test(char);
+  return getCharType(char) === 'whitespace';
 }
 
 /**
@@ -79,7 +103,7 @@ export function isPunctuation(char: string): boolean {
   if (char.length !== 1) {
     return false;
   }
-  return !isWordChar(char) && !isWhitespace(char);
+  return getCharType(char) === 'punctuation';
 }
 
 /**
@@ -99,13 +123,7 @@ export function classifyChar(char: string): CharType {
   if (char.length !== 1) {
     return 'other';
   }
-  if (isWhitespace(char)) {
-    return 'whitespace';
-  }
-  if (isWordChar(char)) {
-    return 'word';
-  }
-  return 'punctuation';
+  return getCharType(char);
 }
 
 /**
@@ -135,31 +153,33 @@ export function findNextWordStart(line: string, column: number): number | null {
   let i = column;
 
   // Check what type of character we're on
-  if (isWordChar(line[i])) {
+  const charType = getCharType(line[i]);
+  
+  if (charType === 'word') {
     // On a word character - skip to end of word, then skip spaces and punctuation, return first word character
-    while (i < length && isWordChar(line[i])) {
+    while (i < length && getCharType(line[i]) === 'word') {
       i++;
     }
     // Skip whitespace
-    while (i < length && isWhitespace(line[i])) {
+    while (i < length && getCharType(line[i]) === 'whitespace') {
       i++;
     }
     // Return first word character (which is the beginning of the next word)
     return i < length ? i : null;
-  } else if (isPunctuation(line[i])) {
+  } else if (charType === 'punctuation') {
     // On punctuation - skip it (don't stop at punctuation)
-    while (i < length && isPunctuation(line[i])) {
+    while (i < length && getCharType(line[i]) === 'punctuation') {
       i++;
     }
     // Skip whitespace
-    while (i < length && isWhitespace(line[i])) {
+    while (i < length && getCharType(line[i]) === 'whitespace') {
       i++;
     }
     // Return first word character
     return i < length ? i : null;
   } else {
     // On whitespace - skip to next word
-    while (i < length && isWhitespace(line[i])) {
+    while (i < length && getCharType(line[i]) === 'whitespace') {
       i++;
     }
     // Return first word character or punctuation
@@ -192,25 +212,26 @@ export function findWordEnd(line: string, column: number): number | null {
 
   let i = column;
   const currentChar = line[i];
+  const charType = getCharType(currentChar);
 
-  if (isWhitespace(currentChar)) {
+  if (charType === 'whitespace') {
     // Skip whitespace
-    while (i < length && isWhitespace(line[i])) {
+    while (i < length && getCharType(line[i]) === 'whitespace') {
       i++;
     }
     // Skip word characters
-    while (i < length && isWordChar(line[i])) {
+    while (i < length && getCharType(line[i]) === 'word') {
       i++;
     }
     // Return end of word (one before current position)
     return i > 0 ? i - 1 : null;
   }
 
-  if (isWordChar(currentChar)) {
+  if (charType === 'word') {
     // First, check if we're already at the end of a word
     // by looking ahead to see if the next character is a word character
     let nextPos = i + 1;
-    while (nextPos < length && isWordChar(line[nextPos])) {
+    while (nextPos < length && getCharType(line[nextPos]) === 'word') {
       nextPos++;
     }
 
@@ -221,11 +242,11 @@ export function findWordEnd(line: string, column: number): number | null {
       // Move past current position
       i = nextPos;
       // Skip non-word characters
-      while (i < length && !isWordChar(line[i])) {
+      while (i < length && getCharType(line[i]) !== 'word') {
         i++;
       }
       // Skip next word
-      while (i < length && isWordChar(line[i])) {
+      while (i < length && getCharType(line[i]) === 'word') {
         i++;
       }
       // Return end of word (one before current position)
@@ -233,7 +254,7 @@ export function findWordEnd(line: string, column: number): number | null {
     } else {
       // We're not at the end, just go to end of current word
       // Skip to end of current word
-      while (i < length && isWordChar(line[i])) {
+      while (i < length && getCharType(line[i]) === 'word') {
         i++;
       }
       // Return end of word (one before current position)
@@ -242,13 +263,13 @@ export function findWordEnd(line: string, column: number): number | null {
   }
 
   // Punctuation - skip non-whitespace, non-word characters
-  while (i < length && !isWhitespace(line[i]) && !isWordChar(line[i])) {
+  while (i < length && getCharType(line[i]) !== 'whitespace' && getCharType(line[i]) !== 'word') {
     i++;
   }
-  while (i < length && isWhitespace(line[i])) {
+  while (i < length && getCharType(line[i]) === 'whitespace') {
     i++;
   }
-  while (i < length && isWordChar(line[i])) {
+  while (i < length && getCharType(line[i]) === 'word') {
     i++;
   }
   return i > 0 ? i - 1 : null;
@@ -278,20 +299,10 @@ export function findPreviousWordStart(line: string, column: number): number | nu
 
   let pos = column - 1;
 
-  // Helper to categorize characters
-  // Type 0: Whitespace
-  // Type 1: Keyword (Alphanumeric + Underscore) - Standard Vim 'iskeyword'
-  // Type 2: Symbol (Punctuation, etc.)
-  const getCharType = (char: string): number => {
-    if (/\s/.test(char)) return 0;
-    if (/[\w]/.test(char)) return 1; // \w matches [A-Za-z0-9_]
-    return 2;
-  };
-
   // Step 1: Skip over preceding whitespace (if any)
   // If the cursor is at the start of a word, we want to jump to the *previous* word,
   // so we must consume the space between them first.
-  while (pos >= 0 && getCharType(line[pos]) === 0) {
+  while (pos >= 0 && getCharType(line[pos]) === 'whitespace') {
     pos--;
   }
 
@@ -346,21 +357,21 @@ export function findPreviousWordEnd(line: string, column: number): number | null
 
   // Check if we're at the end of a word
   // (current position is a word char, and next is not a word char or end of line)
-  /* if (i >= 0 && isWordChar(line[i]) && (i + 1 >= line.length || !isWordChar(line[i + 1]))) {
+  /* if (i >= 0 && getCharType(line[i]) === 'word' && (i + 1 >= line.length || getCharType(line[i + 1]) !== 'word')) {
     // We're at the end of a word, return this position
     return i;
   } */
 
   // We're in the middle of a word
   // Go back to the start of this word
-  if (i >= 0 && isWordChar(line[i])) {
-    while (i >= 0 && isWordChar(line[i])) {
+  if (i >= 0 && getCharType(line[i]) === 'word') {
+    while (i >= 0 && getCharType(line[i]) === 'word') {
       i--;
     }
   }
 
   // Skip whitespace and non-word characters to find the previous word
-  while (i >= 0 && !isWordChar(line[i])) {
+  while (i >= 0 && getCharType(line[i]) !== 'word') {
     i--;
   }
 
@@ -398,19 +409,19 @@ export function findNextWORDStart(line: string, column: number): number | null {
   let i = column;
 
   // If on a non-whitespace character, skip to end of current WORD
-  if (!isWhitespace(line[i])) {
-    while (i < length && !isWhitespace(line[i])) {
+  if (getCharType(line[i]) !== 'whitespace') {
+    while (i < length && getCharType(line[i]) !== 'whitespace') {
       i++;
     }
   }
 
   // Skip whitespace
-  while (i < length && isWhitespace(line[i])) {
+  while (i < length && getCharType(line[i]) === 'whitespace') {
     i++;
   }
 
   // Return position if we found a WORD start
-  return i < length && !isWhitespace(line[i]) ? i : null;
+  return i < length && getCharType(line[i]) !== 'whitespace' ? i : null;
 }
 
 /**
@@ -438,30 +449,28 @@ export function findNextWORDEnd(line: string, column: number): number | null {
 
   let i = column;
   const currentChar = line[i];
+  const charType = getCharType(currentChar);
 
-  if (isWhitespace(currentChar)) {
+  if (charType === 'whitespace') {
     // Skip whitespace
-    while (i < length && isWhitespace(line[i])) {
+    while (i < length && getCharType(line[i]) === 'whitespace') {
       i++;
     }
     // Skip WORD characters
-    while (i < length && !isWhitespace(line[i])) {
+    while (i < length && getCharType(line[i]) !== 'whitespace') {
       i++;
     }
     // Return end of WORD (one before current position)
     return i > 0 ? i - 1 : null;
   }
 
-  if (!isWhitespace(currentChar)) {
-    // Skip WORD characters
-    while (i < length && !isWhitespace(line[i])) {
-      i++;
-    }
-    // Return end of WORD
-    return i > 0 ? i - 1 : null;
+  // Non-whitespace character
+  // Skip WORD characters
+  while (i < length && getCharType(line[i]) !== 'whitespace') {
+    i++;
   }
-
-  return null;
+  // Return end of WORD
+  return i > 0 ? i - 1 : null;
 }
 
 /**
@@ -489,7 +498,7 @@ export function findPreviousWORDStart(line: string, column: number): number | nu
   let i = column - 1;
 
   // Skip whitespace
-  while (i >= 0 && isWhitespace(line[i])) {
+  while (i >= 0 && getCharType(line[i]) === 'whitespace') {
     i--;
   }
   if (i < 0) {
@@ -497,7 +506,7 @@ export function findPreviousWORDStart(line: string, column: number): number | nu
   }
 
   // Skip non-whitespace characters (WORD characters) backward
-  while (i >= 0 && !isWhitespace(line[i])) {
+  while (i >= 0 && getCharType(line[i]) !== 'whitespace') {
     i--;
   }
   return i + 1;
@@ -528,7 +537,7 @@ export function findPreviousWORDEnd(line: string, column: number): number | null
   let i = column - 1;
 
   // Skip whitespace at end
-  while (i >= 0 && isWhitespace(line[i])) {
+  while (i >= 0 && getCharType(line[i]) === 'whitespace') {
     i--;
   }
   if (i < 0) {
@@ -536,7 +545,7 @@ export function findPreviousWORDEnd(line: string, column: number): number | null
   }
 
   // Skip non-whitespace characters (WORD characters) backward
-  while (i >= 0 && !isWhitespace(line[i])) {
+  while (i >= 0 && getCharType(line[i]) !== 'whitespace') {
     i--;
   }
   return i + 1;
