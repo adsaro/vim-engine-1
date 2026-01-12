@@ -472,11 +472,202 @@ export class DollarMovementPlugin extends LineMovementPlugin {
   readonly patterns = ['$'];
   readonly modes: VimMode[] = [VIM_MODE.NORMAL, VIM_MODE.VISUAL];
 
-  protected calculateColumn(line: string, cursor: CursorPosition): number {
-    return line.length;
+  protected calculateLinePosition(line: string, cursor: CursorPosition): number {
+    return Math.max(0, line.length - 1);
   }
 }
 ```
+
+### Creating Line Movement Plugins
+
+Line movement plugins extend the [`LineMovementPlugin`](./base/LineMovementPlugin.ts) base class, which provides common functionality for movements that position the cursor at specific columns on the current line.
+
+#### Implementation Steps
+
+1. **Create Plugin Directory**
+   ```bash
+   mkdir -p src/plugins/movement/x
+   ```
+
+2. **Create Plugin File**
+   Create `src/plugins/movement/x/XMovementPlugin.ts`:
+
+   ```typescript
+   /**
+    * XMovementPlugin - Brief description
+    *
+    * Detailed description of what this plugin does.
+    *
+    * @example
+    * ```typescript
+    * import { XMovementPlugin } from './x/XMovementPlugin';
+    *
+    * const plugin = new XMovementPlugin();
+    * executor.registerPlugin(plugin);
+    * executor.handleKeystroke('x');
+    * ```
+    *
+    * @see LineMovementPlugin For the base class
+    */
+   import { LineMovementPlugin } from '../base/LineMovementPlugin';
+   import { CursorPosition } from '../../../state/CursorPosition';
+   import { VIM_MODE } from '../../../state/VimMode';
+
+   /**
+    * XMovementPlugin - Extended description
+    */
+   export class XMovementPlugin extends LineMovementPlugin {
+     readonly name = 'movement-x';
+     readonly version = '1.0.0';
+     readonly description = 'Description of movement (x key)';
+     readonly patterns = ['x'];
+     readonly modes: VIM_MODE[] = [VIM_MODE.NORMAL, VIM_MODE.VISUAL];
+
+     constructor() {
+       super(
+         'movement-x',
+         'Description of movement (x key)',
+         'x',
+         [VIM_MODE.NORMAL, VIM_MODE.VISUAL]
+       );
+     }
+
+     protected calculateLinePosition(
+       line: string,
+       cursor: CursorPosition
+     ): number {
+       // Calculate target column based on line content
+       // Return 0 for empty lines or appropriate column
+       return 0;
+     }
+   }
+   ```
+
+3. **Create Index File**
+   Create `src/plugins/movement/x/index.ts`:
+
+   ```typescript
+   export { XMovementPlugin } from './XMovementPlugin';
+   ```
+
+4. **Update Main Index**
+   Add to `src/plugins/movement/index.ts`:
+
+   ```typescript
+   export * from './x';
+   ```
+
+5. **Write Unit Tests**
+   Create `src/plugins/movement/x/XMovementPlugin.test.ts`:
+
+   ```typescript
+   import { XMovementPlugin } from './XMovementPlugin';
+   import { ExecutionContext } from '../../../plugin/ExecutionContext';
+   import { VimState } from '../../../state/VimState';
+   import { CursorPosition } from '../../../state/CursorPosition';
+   import { VIM_MODE } from '../../../state/VimMode';
+
+   describe('XMovementPlugin', () => {
+     describe('Metadata', () => {
+       it('should have correct name', () => {
+         const plugin = new XMovementPlugin();
+         expect(plugin.name).toBe('movement-x');
+       });
+
+       it('should have correct version', () => {
+         const plugin = new XMovementPlugin();
+         expect(plugin.version).toBe('1.0.0');
+       });
+
+       it('should have correct description', () => {
+         const plugin = new XMovementPlugin();
+         expect(plugin.description).toBe('Description of movement (x key)');
+       });
+
+       it('should have correct pattern', () => {
+         const plugin = new XMovementPlugin();
+         expect(plugin.patterns).toEqual(['x']);
+       });
+
+       it('should support NORMAL and VISUAL modes', () => {
+         const plugin = new XMovementPlugin();
+         expect(plugin.modes).toContain(VIM_MODE.NORMAL);
+         expect(plugin.modes).toContain(VIM_MODE.VISUAL);
+         expect(plugin.modes).not.toContain(VIM_MODE.INSERT);
+         expect(plugin.modes).not.toContain(VIM_MODE.COMMAND);
+       });
+     });
+
+     describe('Movement Behavior', () => {
+       it('should move to correct position', () => {
+         const plugin = new XMovementPlugin();
+         const state = new VimState('test line');
+         state.cursor = new CursorPosition(0, 5);
+         const context = new ExecutionContext(state);
+         context.setMode(VIM_MODE.NORMAL);
+
+         plugin.execute(context);
+
+         expect(context.getCursor().column).toBe(expectedColumn);
+       });
+     });
+
+     describe('Edge Cases', () => {
+       it('should handle empty line', () => {
+         const plugin = new XMovementPlugin();
+         const state = new VimState('line1\n\nline3');
+         state.cursor = new CursorPosition(1, 0);
+         const context = new ExecutionContext(state);
+         context.setMode(VIM_MODE.NORMAL);
+
+         plugin.execute(context);
+
+         expect(context.getCursor().column).toBe(expectedForEmpty);
+       });
+
+       it('should handle whitespace-only line', () => {
+         const plugin = new XMovementPlugin();
+         const state = new VimState('line1\n   \nline3');
+         state.cursor = new CursorPosition(1, 2);
+         const context = new ExecutionContext(state);
+         context.setMode(VIM_MODE.NORMAL);
+
+         plugin.execute(context);
+
+         expect(context.getCursor().column).toBe(expectedForWhitespace);
+       });
+     });
+   });
+   ```
+
+#### Key Considerations
+
+1. **Column Calculation**: Implement [`calculateLinePosition()`](./base/LineMovementPlugin.ts) to return the target column based on line content.
+
+2. **Empty Line Handling**: Decide how to handle empty lines:
+   - Return 0 (stay at start)
+   - Return line.length (stay at end, which is 0)
+   - Return a specific column based on your movement logic
+
+3. **Whitespace Handling**: Consider how to handle whitespace-only lines:
+   - For movements that find non-whitespace (like `^` and `g_`), return 0
+   - For absolute movements (like `0` and `$`), return appropriate column
+
+4. **Count Support**: The base class automatically handles count-based movements, moving down (count - 1) lines before applying the line movement.
+
+5. **Utility Functions**: Use existing utilities from [`lineUtils.ts`](./utils/lineUtils.ts):
+   - `findFirstNonWhitespace(line)` - Find first non-whitespace character
+   - `findLastNonWhitespace(line)` - Find last non-whitespace character
+   - `clampColumn(column, line)` - Clamp column to valid range
+
+#### Examples
+
+See the existing line movement plugins for reference:
+
+- [`ZeroMovementPlugin`](./0/ZeroMovementPlugin.ts) - Always returns column 0
+- [`CaretMovementPlugin`](./caret/CaretMovementPlugin.ts) - Uses `findFirstNonWhitespace()`
+- [`DollarMovementPlugin`](./dollar/DollarMovementPlugin.ts) - Returns `line.length - 1`
+- [`GUnderscoreMovementPlugin`](./g-underscore/GUnderscoreMovementPlugin.ts) - Uses `findLastNonWhitespace()`
 
 ### Pattern 4: Multi-line Search
 
