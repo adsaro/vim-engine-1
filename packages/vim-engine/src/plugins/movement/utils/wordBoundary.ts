@@ -127,32 +127,19 @@ export function classifyChar(char: string): CharType {
  * ```
  */
 export function findNextWordStart(line: string, column: number): number | null {
-  console.log('[findNextWordStart] Called with line:', line.substring(0, 30), 'column:', column);
-
   const length = line.length;
   if (column < 0 || column >= length) {
-    console.log('[findNextWordStart] At start/end of line');
     return null;
   }
 
   let i = column;
-  console.log(
-    '[findNextWordStart] Character:',
-    line[i],
-    'isWordChar:',
-    isWordChar(line[i]),
-    'isPunctuation:',
-    isPunctuation(line[i])
-  );
 
   // Check what type of character we're on
   if (isWordChar(line[i])) {
-    console.log('[findNextWordStart] On word character');
     // On a word character - skip to end of word, then skip spaces and punctuation, return first word character
     while (i < length && isWordChar(line[i])) {
       i++;
     }
-    console.log('[findNextWordStart] After skipping word, i:', i, 'char:', line[i]);
     // Skip whitespace
     while (i < length && isWhitespace(line[i])) {
       i++;
@@ -162,10 +149,8 @@ export function findNextWordStart(line: string, column: number): number | null {
       i++;
     } */
     // Return first word character (which is the beginning of the next word)
-    console.log('[findNextWordStart] Returning:', i, 'char:', line[i]);
     return i < length ? i : null;
   } else if (isPunctuation(line[i])) {
-    console.log('[findNextWordStart] On punctuation, i:', i, 'char:', line[i]);
     // On punctuation - skip it (don't stop at punctuation)
     while (i < length && isPunctuation(line[i])) {
       i++;
@@ -175,23 +160,15 @@ export function findNextWordStart(line: string, column: number): number | null {
       i++;
     }
     // Return first word character
-    console.log('[findNextWordStart] After skipping whitespace, i:', i, 'char:', line[i]);
     return i < length ? i : null;
   } else {
-    console.log('[findNextWordStart] On whitespace');
     // On whitespace - skip to next word
     while (i < length && isWhitespace(line[i])) {
       i++;
     }
     // Return first word character or punctuation
-    console.log('[findNextWordStart] After skipping whitespace, i:', i, 'char:', line[i]);
     return i < length ? i : null;
   }
-
-  // Return position if we found a word start
-  const result = i < length && (isWordChar(line[i]) || isPunctuation(line[i])) ? i : null;
-  console.log('[findNextWordStart] Returning:', result);
-  return result;
 }
 
 /**
