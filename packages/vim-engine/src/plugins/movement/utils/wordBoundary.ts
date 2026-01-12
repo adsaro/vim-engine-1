@@ -144,10 +144,6 @@ export function findNextWordStart(line: string, column: number): number | null {
     while (i < length && isWhitespace(line[i])) {
       i++;
     }
-    // Skip punctuation too
-    /* while (i < length && isPunctuation(line[i])) {
-      i++;
-    } */
     // Return first word character (which is the beginning of the next word)
     return i < length ? i : null;
   } else if (isPunctuation(line[i])) {
@@ -276,32 +272,42 @@ export function findWordEnd(line: string, column: number): number | null {
  * ```
  */
 export function findPreviousWordStart(line: string, column: number): number | null {
-  if (column <= 0) {
-    return null;
+  // Ensure column is within bounds to prevent errors
+  if (column <= 0) return null;
+  if (column > line.length) column = line.length;
+
+  let pos = column - 1;
+
+  // Helper to categorize characters
+  // Type 0: Whitespace
+  // Type 1: Keyword (Alphanumeric + Underscore) - Standard Vim 'iskeyword'
+  // Type 2: Symbol (Punctuation, etc.)
+  const getCharType = (char: string): number => {
+    if (/\s/.test(char)) return 0;
+    if (/[\w]/.test(char)) return 1; // \w matches [A-Za-z0-9_]
+    return 2;
+  };
+
+  // Step 1: Skip over preceding whitespace (if any)
+  // If the cursor is at the start of a word, we want to jump to the *previous* word,
+  // so we must consume the space between them first.
+  while (pos >= 0 && getCharType(line[pos]) === 0) {
+    pos--;
   }
 
-  let i = column - 1;
+  // If we reached the start of the line while skipping whitespace
+  if (pos < 0) return null;
 
-  // Skip whitespace
-  while (i >= 0 && isWhitespace(line[i])) {
-    i--;
-  }
-  if (i < 0) {
-    return null;
-  }
+  // Step 2: Identify the type of the word we are currently on (Keyword or Symbol)
+  const targetType = getCharType(line[pos]);
 
-  if (isWordChar(line[i])) {
-    // Skip word characters backward
-    while (i >= 0 && isWordChar(line[i])) {
-      i--;
-    }
-    return i + 1;
+  // Step 3: Move backward as long as the character type remains the same
+  while (pos >= 0 && getCharType(line[pos]) === targetType) {
+    pos--;
   }
 
-  // For `b` movement: we're on punctuation or non-word char
-  // Just return this position (beginning of this punctuation/symbol)
-  // This is different from `B` which would skip all punctuation
-  return i + 1;
+  // We went one index too far (into the previous word or whitespace), so add 1
+  return pos + 1;
 }
 
 /**
