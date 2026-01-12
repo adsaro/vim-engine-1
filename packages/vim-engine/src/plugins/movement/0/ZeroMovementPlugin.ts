@@ -14,7 +14,7 @@
  */
 import { LineMovementPlugin } from '../base/LineMovementPlugin';
 import { CursorPosition } from '../../../state/CursorPosition';
-import { VIM_MODE } from '../../../state/VimMode';
+import { VimMode, VIM_MODE } from '../../../state/VimMode';
 
 /**
  * ZeroMovementPlugin - Move to start of line (0 key)
@@ -45,7 +45,7 @@ export class ZeroMovementPlugin extends LineMovementPlugin {
   readonly version = '1.0.0';
   readonly description = 'Move to start of line (0 key)';
   readonly patterns = ['0'];
-  readonly modes: VIM_MODE[] = [VIM_MODE.NORMAL, VIM_MODE.VISUAL];
+  readonly modes: VimMode[] = [VIM_MODE.NORMAL, VIM_MODE.VISUAL];
 
   /**
    * Create a new ZeroMovementPlugin
@@ -69,8 +69,8 @@ export class ZeroMovementPlugin extends LineMovementPlugin {
    * @returns Always returns 0
    */
   protected calculateLinePosition(
-    line: string,
-    cursor: CursorPosition
+    _line: string,
+    _cursor: CursorPosition
   ): number {
     return 0;
   }

@@ -14,7 +14,7 @@
  */
 import { LineMovementPlugin } from '../base/LineMovementPlugin';
 import { CursorPosition } from '../../../state/CursorPosition';
-import { VIM_MODE } from '../../../state/VimMode';
+import { VimMode, VIM_MODE } from '../../../state/VimMode';
 
 /**
  * DollarMovementPlugin - Move to end of line ($ key)
@@ -46,7 +46,7 @@ export class DollarMovementPlugin extends LineMovementPlugin {
   readonly version = '1.0.0';
   readonly description = 'Move to end of line ($ key)';
   readonly patterns = ['$'];
-  readonly modes: VIM_MODE[] = [VIM_MODE.NORMAL, VIM_MODE.VISUAL];
+  readonly modes: VimMode[] = [VIM_MODE.NORMAL, VIM_MODE.VISUAL];
 
   /**
    * Create a new DollarMovementPlugin
@@ -72,7 +72,7 @@ export class DollarMovementPlugin extends LineMovementPlugin {
    */
   protected calculateLinePosition(
     line: string,
-    cursor: CursorPosition
+    _cursor: CursorPosition
   ): number {
     // Move to last character (line.length - 1), or 0 if line is empty
     return Math.max(0, line.length - 1);

@@ -14,7 +14,7 @@
  */
 import { LineMovementPlugin } from '../base/LineMovementPlugin';
 import { CursorPosition } from '../../../state/CursorPosition';
-import { VIM_MODE } from '../../../state/VimMode';
+import { VimMode, VIM_MODE } from '../../../state/VimMode';
 import { findFirstNonWhitespace } from '../utils/lineUtils';
 
 /**
@@ -46,7 +46,7 @@ export class CaretMovementPlugin extends LineMovementPlugin {
   readonly version = '1.0.0';
   readonly description = 'Move to first non-blank character (^ key)';
   readonly patterns = ['^'];
-  readonly modes: VIM_MODE[] = [VIM_MODE.NORMAL, VIM_MODE.VISUAL];
+  readonly modes: VimMode[] = [VIM_MODE.NORMAL, VIM_MODE.VISUAL];
 
   /**
    * Create a new CaretMovementPlugin
@@ -72,7 +72,7 @@ export class CaretMovementPlugin extends LineMovementPlugin {
    */
   protected calculateLinePosition(
     line: string,
-    cursor: CursorPosition
+    _cursor: CursorPosition
   ): number {
     const firstNonWhitespace = findFirstNonWhitespace(line);
     return firstNonWhitespace !== null ? firstNonWhitespace : 0;

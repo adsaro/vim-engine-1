@@ -117,7 +117,7 @@ export abstract class LineMovementPlugin extends MovementPlugin {
   protected calculateNewPosition(
     cursor: CursorPosition,
     buffer: TextBuffer,
-    config: Required<MovementConfig>
+    _config: Required<MovementConfig>
   ): CursorPosition {
     // Get current line from buffer
     const line = buffer.getLine(cursor.line);
