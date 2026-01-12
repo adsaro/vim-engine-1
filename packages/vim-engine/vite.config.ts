@@ -10,6 +10,12 @@ export default defineConfig({
       tsconfigPath: './tsconfig.json',
     }),
   ],
+  test: {
+    globals: true,
+    environment: 'node',
+    setupFiles: [],
+    include: ['**/*.test.ts'],
+  },
   build: {
     lib: {
       entry: resolve(__dirname, 'src/index.ts'),

@@ -67,7 +67,7 @@ export abstract class WordMovementPlugin extends MovementPlugin {
     }
 
     const currentLine = buffer.getLine(cursor.line);
-    if (!currentLine) {
+    if (currentLine === null) {
       return cursor.clone();
     }
 
@@ -86,7 +86,8 @@ export abstract class WordMovementPlugin extends MovementPlugin {
    * Find boundary in other lines
    *
    * Searches in the configured direction (forward or backward) for a line
-   * containing a word boundary, skipping empty lines.
+   * containing a word boundary. Stops at empty lines, returning cursor position
+   * at the beginning of the empty line.
    *
    * @param cursor - The current cursor position
    * @param buffer - The text buffer
@@ -107,11 +108,9 @@ export abstract class WordMovementPlugin extends MovementPlugin {
 
     for (let line = startLine; line !== endLine; line += step) {
       const lineContent = buffer.getLine(line);
-      if (!lineContent) {
-        continue;
-      }
-      if (lineContent.trim().length === 0) {
-        continue;
+      if (!lineContent || lineContent.trim().length === 0) {
+        // Stop at empty lines - return cursor position at the beginning of the empty line
+        return new CursorPosition(line, 0, 0);
       }
 
       // For forward movement, find the first non-whitespace character
