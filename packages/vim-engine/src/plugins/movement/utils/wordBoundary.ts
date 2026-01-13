@@ -572,7 +572,14 @@ export function findNextWORDEnd(line: string, column: number): number | null {
  * findPreviousWORDStart('hello   world', 8); // 8 (start of 'world')
  * ```
  */
-export function findPreviousWORDStart(line: string, column: number): number | null {
+export function findPreviousWORDStart(
+  line: string,
+  column: number,
+  rolling: boolean = false
+): number | null {
+  if (rolling && !line) {
+    return 0;
+  }
   if (column <= 0) {
     return null;
   }
