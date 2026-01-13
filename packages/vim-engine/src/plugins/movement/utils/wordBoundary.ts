@@ -409,18 +409,26 @@ export function findPreviousWordStart(
  * findPreviousWordEnd('one two three four', 18); // 12 (end of 'three')
  * ```
  */
-export function findPreviousWordEnd(line: string, column: number): number | null {
+export function findPreviousWordEnd(line: string, column: number, rolling: boolean = false): number | null {
   // 1. Handle edge cases: Start of line
-  if (column <= 1) {
+  const length = line.length
+  if (column < 1) {
+    if (rolling) {
+      return 0
+    }
     return null;
   }
 
   // 2. Convert to 0-based index
-  let pos = column - 1;
+  let pos = column;
 
   // Clamp if out of bounds
-  if (pos >= line.length) {
-    pos = line.length - 1;
+  if (pos >= length) {
+    pos = length - 1;
+
+  if (rolling && !isWhitespace(line[pos])) {
+    return pos;
+  }
   }
 
   // --- Phase 1: Escape the current word ---
@@ -428,7 +436,7 @@ export function findPreviousWordEnd(line: string, column: number): number | null
   // We strictly stay on the SAME type.
   const startType = getCharType(line[pos]);
 
-  if (isWhitespace(line[pos])) {
+  if (!isWhitespace(line[pos])) {
     // Move back as long as we see the exact same type (e.g., stay in Symbol mode)
     while (pos >= 0 && getCharType(line[pos]) === startType) {
       pos--;
