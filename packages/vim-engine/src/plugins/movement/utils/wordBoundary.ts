@@ -144,9 +144,13 @@ export function classifyChar(char: string): CharType {
  * findNextWordStart('hello   world', 5); // 8 (start of 'world')
  * ```
  */
-export function findNextWordStart(line: string, column: number, rolling: boolean = false): number | null {
+export function findNextWordStart(
+  line: string,
+  column: number,
+  rolling: boolean = false
+): number | null {
   const length = line.length;
-  if (column < 0 || column >= length && !rolling) {
+  if (column < 0 || (column >= length && !rolling)) {
     return null;
   }
 
@@ -348,9 +352,18 @@ export function findWordEnd(line: string, column: number, rolling: boolean = fal
  * findPreviousWordStart('hello   world', 8); // 8 (start of 'world')
  * ```
  */
-export function findPreviousWordStart(line: string, column: number): number | null {
+export function findPreviousWordStart(
+  line: string,
+  column: number,
+  rolling: boolean = false
+): number | null {
   // Ensure column is within bounds to prevent errors
-  if (column <= 0) return null;
+  if (column <= 0) {
+    if (rolling) {
+      return 0;
+    }
+    return null;
+  }
   if (column > line.length) column = line.length;
 
   let pos = column - 1;
