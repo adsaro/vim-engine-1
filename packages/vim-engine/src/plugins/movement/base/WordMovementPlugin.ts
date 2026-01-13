@@ -34,7 +34,6 @@
 import { MovementPlugin, MovementConfig } from './MovementPlugin';
 import { CursorPosition } from '../../../state/CursorPosition';
 import { TextBuffer } from '../../../state/TextBuffer';
-import { isWhitespace } from '../utils/wordBoundary';
 
 /**
  * WordMovementPlugin - Abstract base for word-based movements
@@ -72,7 +71,7 @@ export abstract class WordMovementPlugin extends MovementPlugin {
     }
 
     // Try finding boundary on current line
-    const boundary = this.findBoundary(currentLine, cursor.column);
+    const boundary = this.findBoundary(currentLine, cursor.column, false);
     if (boundary !== null) {
       // Update desiredColumn to preserve this column position for vertical movement
       return new CursorPosition(cursor.line, boundary, boundary);
@@ -116,23 +115,17 @@ export abstract class WordMovementPlugin extends MovementPlugin {
       // For forward movement, find the first non-whitespace character
       // This matches Vim's behavior where w moves to the start of the next WORD
       if (this.direction === 'forward') {
-        let firstNonWhitespace = 0;
-        while (
-          firstNonWhitespace < lineContent.length &&
-          isWhitespace(lineContent[firstNonWhitespace])
-        ) {
-          firstNonWhitespace++;
-        }
+        const boundary = this.findBoundary(lineContent, 0, true);
 
-        if (firstNonWhitespace < lineContent.length) {
+        if (boundary !== null && boundary < lineContent.length) {
           // Update desiredColumn to preserve this column position for vertical movement
-          return new CursorPosition(line, firstNonWhitespace, firstNonWhitespace);
+          return new CursorPosition(line, boundary, boundary);
         }
       }
 
       // For backward movement, start from end of line
       const searchColumn = this.direction === 'forward' ? 0 : lineContent.length;
-      const boundary = this.findBoundary(lineContent, searchColumn);
+      const boundary = this.findBoundary(lineContent, searchColumn, true);
 
       if (boundary !== null) {
         // Update desiredColumn to preserve this column position for vertical movement
@@ -152,7 +145,7 @@ export abstract class WordMovementPlugin extends MovementPlugin {
    * @param column - The starting column position
    * @returns The column index of the boundary, or null if not found
    */
-  protected abstract findBoundary(line: string, column: number): number | null;
+  protected abstract findBoundary(line: string, column: number, rolling: boolean): number | null;
 
   /**
    * Get the movement direction

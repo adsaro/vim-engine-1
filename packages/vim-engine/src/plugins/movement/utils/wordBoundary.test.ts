@@ -529,7 +529,7 @@ describe('wordBoundary', () => {
     });
   });
 
-  describe.only('findPreviousWordStart', () => {
+  describe('findPreviousWordStart', () => {
     describe('on word character', () => {
       it('should find previous word start from beginning of word', () => {
         expect(findPreviousWordStart('hello world', 6)).toBe(0);

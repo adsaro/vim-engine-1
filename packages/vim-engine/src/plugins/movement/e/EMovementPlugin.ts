@@ -84,7 +84,7 @@ export class EMovementPlugin extends WordMovementPlugin {
    * @param column - The starting column position
    * @returns The column index of the word end, or null if not found
    */
-  protected findBoundary(line: string, column: number): number | null {
-    return findWordEnd(line, column);
+  protected findBoundary(line: string, column: number, rolling: boolean = false): number | null {
+    return findWordEnd(line, column, rolling);
   }
 }

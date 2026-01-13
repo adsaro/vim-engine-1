@@ -154,7 +154,7 @@ export function findNextWordStart(line: string, column: number): number | null {
 
   // Check what type of character we're on
   const charType = getCharType(line[i]);
-  
+
   if (charType === 'word') {
     // On a word character - skip to end of word, then skip spaces and punctuation, return first word character
     while (i < length && getCharType(line[i]) === 'word') {
@@ -204,9 +204,9 @@ export function findNextWordStart(line: string, column: number): number | null {
  * findWordEnd('hello   world', 5); // 7 (end of 'world')
  * ```
  */
-export function findWordEnd(line: string, column: number): number | null {
+export function findWordEnd(line: string, column: number, rolling: boolean = false): number | null {
   const length = line.length;
-  if (column < 0 || column >= length) {
+  if (column < 0 || (column + 1 >= length && !rolling && line.length)) {
     return null;
   }
 
@@ -219,12 +219,13 @@ export function findWordEnd(line: string, column: number): number | null {
     while (i < length && getCharType(line[i]) === 'whitespace') {
       i++;
     }
-    // Skip word characters
-    while (i < length && getCharType(line[i]) === 'word') {
+    // Skip similar characters
+    const currentType = getCharType(line[i]);
+    while (i < length && getCharType(line[i]) === currentType) {
       i++;
     }
     // Return end of word (one before current position)
-    return i > 0 ? i - 1 : null;
+    return i > 0 && i <= length ? i - 1 : null;
   }
 
   if (charType === 'word') {
@@ -241,16 +242,21 @@ export function findWordEnd(line: string, column: number): number | null {
       // We're at the end of the current word, find next word
       // Move past current position
       i = nextPos;
-      // Skip non-word characters
-      while (i < length && getCharType(line[i]) !== 'word') {
+      // Skip whitespace only (stop at punctuation)
+      while (
+        i < length &&
+        getCharType(line[i]) !== 'word' &&
+        getCharType(line[i]) !== 'punctuation'
+      ) {
         i++;
       }
       // Skip next word
-      while (i < length && getCharType(line[i]) === 'word') {
+      const currentType = getCharType(line[i]);
+      while (i < length && getCharType(line[i]) === currentType) {
         i++;
       }
       // Return end of word (one before current position)
-      return i > 0 ? i - 1 : null;
+      return i > 0 && i <= length ? i - 1 : null;
     } else {
       // We're not at the end, just go to end of current word
       // Skip to end of current word
@@ -258,7 +264,47 @@ export function findWordEnd(line: string, column: number): number | null {
         i++;
       }
       // Return end of word (one before current position)
-      return i > 0 ? i - 1 : null;
+      return i > 0 && i <= length ? i - 1 : null;
+    }
+  }
+
+  if (charType === 'punctuation') {
+    // First, check if we're already at the end of a punctuation sequence
+    // by looking ahead to see if the next character is a punctuation character
+    let nextPos = i + 1;
+    while (nextPos < length && getCharType(line[nextPos]) === 'punctuation') {
+      nextPos++;
+    }
+
+    // If the current position is the last character of the word,
+    // we need to find the next word
+    if (i === nextPos - 1) {
+      // We're at the end of the current word, find next word
+      // Move past current position
+      i = nextPos;
+      // Skip whitespace only (stop at punctuation)
+      while (
+        i < length &&
+        getCharType(line[i]) !== 'word' &&
+        getCharType(line[i]) !== 'punctuation'
+      ) {
+        i++;
+      }
+      // Skip next word
+      const currentType = getCharType(line[i]);
+      while (i < length && getCharType(line[i]) === currentType) {
+        i++;
+      }
+      // Return end of word (one before current position)
+      return i > 0 && i <= length ? i - 1 : null;
+    } else {
+      // We're not at the end, just go to end of current punctuation sequence
+      // Skip to end of current punctuation sequence
+      while (i < length && getCharType(line[i]) === 'punctuation') {
+        i++;
+      }
+      // Return end of punctuation sequence (one before current position)
+      return i > 0 && i <= length ? i - 1 : null;
     }
   }
 
@@ -269,10 +315,11 @@ export function findWordEnd(line: string, column: number): number | null {
   while (i < length && getCharType(line[i]) === 'whitespace') {
     i++;
   }
-  while (i < length && getCharType(line[i]) === 'word') {
+  const currentType = getCharType(line[i]);
+  while (i < length && getCharType(line[i]) === currentType) {
     i++;
   }
-  return i > 0 ? i - 1 : null;
+  return i > 0 && i <= length ? i - 1 : null;
 }
 
 /**
@@ -341,46 +388,45 @@ export function findPreviousWordStart(line: string, column: number): number | nu
  * ```
  */
 export function findPreviousWordEnd(line: string, column: number): number | null {
-  if (column <= 0) {
+  // 1. Handle edge cases: Start of line
+  if (column <= 1) {
     return null;
   }
 
-  let i = column - 1;
+  // 2. Convert to 0-based index
+  let pos = column - 1;
 
-  // Check if we're at or past the end of the line
-  if (column >= line.length) {
-    // Start from the last character
-    i = line.length - 1;
-    // This is the end of the last word on the line
-    return i;
+  // Clamp if out of bounds
+  if (pos >= line.length) {
+    pos = line.length - 1;
   }
 
-  // Check if we're at the end of a word
-  // (current position is a word char, and next is not a word char or end of line)
-  /* if (i >= 0 && getCharType(line[i]) === 'word' && (i + 1 >= line.length || getCharType(line[i + 1]) !== 'word')) {
-    // We're at the end of a word, return this position
-    return i;
-  } */
+  // --- Phase 1: Escape the current word ---
+  // If we are on a word/symbol, move back until we hit the start of it.
+  // We strictly stay on the SAME type.
+  const startType = getCharType(line[pos]);
 
-  // We're in the middle of a word
-  // Go back to the start of this word
-  if (i >= 0 && getCharType(line[i]) === 'word') {
-    while (i >= 0 && getCharType(line[i]) === 'word') {
-      i--;
+  if (isWhitespace(line[pos])) {
+    // Move back as long as we see the exact same type (e.g., stay in Symbol mode)
+    while (pos >= 0 && getCharType(line[pos]) === startType) {
+      pos--;
     }
   }
 
-  // Skip whitespace and non-word characters to find the previous word
-  while (i >= 0 && getCharType(line[i]) !== 'word') {
-    i--;
+  // --- Phase 2: Skip the Gap (Whitespace) ---
+  // Now we are either on whitespace (from the start) or we just exited a word and landed on whitespace/previous word.
+  // We must consume all whitespace to find the END of the previous word.
+  while (pos >= 0 && isWhitespace(line[pos])) {
+    pos--;
   }
 
-  if (i < 0) {
+  // If we went past the start of the line, return null (or 0 if you prefer to clamp)
+  if (pos < 0) {
     return null;
   }
 
-  // Now i is at the last character of the previous word
-  return i;
+  // pos is now on the last character of the previous word.
+  return pos;
 }
 
 /**
