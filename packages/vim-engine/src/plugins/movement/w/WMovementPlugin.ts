@@ -83,7 +83,7 @@ export class WMovementPlugin extends WordMovementPlugin {
    * @param column - The starting column position
    * @returns The column index of the next word start, or null if not found
    */
-  protected findBoundary(line: string, column: number): number | null {
-    return findNextWordStart(line, column);
+  protected findBoundary(line: string, column: number, rolling: boolean = false): number | null {
+    return findNextWordStart(line, column, rolling);
   }
 }

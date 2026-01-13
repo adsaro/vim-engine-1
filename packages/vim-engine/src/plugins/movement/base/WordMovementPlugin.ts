@@ -106,11 +106,7 @@ export abstract class WordMovementPlugin extends MovementPlugin {
     const step = this.direction === 'forward' ? 1 : -1;
 
     for (let line = startLine; line !== endLine; line += step) {
-      const lineContent = buffer.getLine(line);
-      if (!lineContent || lineContent.trim().length === 0) {
-        // Stop at empty lines - return cursor position at the beginning of the empty line
-        return new CursorPosition(line, 0, 0);
-      }
+      const lineContent = buffer.getLine(line) ?? '';
 
       // For forward movement, find the first non-whitespace character
       // This matches Vim's behavior where w moves to the start of the next WORD
