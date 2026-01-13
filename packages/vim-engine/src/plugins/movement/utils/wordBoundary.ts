@@ -468,13 +468,27 @@ export function findPreviousWordEnd(line: string, column: number): number | null
  * findNextWORDStart('hello   world', 5); // 8 (start of 'world')
  * ```
  */
-export function findNextWORDStart(line: string, column: number): number | null {
+export function findNextWORDStart(
+  line: string,
+  column: number,
+  rolling: boolean = false
+): number | null {
   const length = line.length;
+  let i = column;
+
+  if (rolling) {
+    if (!line) {
+      return 0;
+    }
+    // Skip whitespace
+    while (i < length && getCharType(line[i]) === 'whitespace') {
+      i++;
+    }
+    return i >= length ? null : i;
+  }
   if (column < 0 || column >= length) {
     return null;
   }
-
-  let i = column;
 
   // If on a non-whitespace character, skip to end of current WORD
   if (getCharType(line[i]) !== 'whitespace') {
