@@ -144,9 +144,9 @@ export function classifyChar(char: string): CharType {
  * findNextWordStart('hello   world', 5); // 8 (start of 'world')
  * ```
  */
-export function findNextWordStart(line: string, column: number): number | null {
+export function findNextWordStart(line: string, column: number, rolling: boolean = false): number | null {
   const length = line.length;
-  if (column < 0 || column >= length) {
+  if (column < 0 || column >= length && !rolling) {
     return null;
   }
 
@@ -156,6 +156,9 @@ export function findNextWordStart(line: string, column: number): number | null {
   const charType = getCharType(line[i]);
 
   if (charType === 'word') {
+    if (rolling) {
+      return i;
+    }
     // On a word character - skip to end of word, then skip spaces and punctuation, return first word character
     while (i < length && getCharType(line[i]) === 'word') {
       i++;
@@ -167,6 +170,9 @@ export function findNextWordStart(line: string, column: number): number | null {
     // Return first word character (which is the beginning of the next word)
     return i < length ? i : null;
   } else if (charType === 'punctuation') {
+    if (rolling) {
+      return i;
+    }
     // On punctuation - skip it (don't stop at punctuation)
     while (i < length && getCharType(line[i]) === 'punctuation') {
       i++;
@@ -207,6 +213,9 @@ export function findNextWordStart(line: string, column: number): number | null {
 export function findWordEnd(line: string, column: number, rolling: boolean = false): number | null {
   const length = line.length;
   if (column < 0 || (column + 1 >= length && !rolling && line.length)) {
+    return null;
+  }
+  if (rolling && !line) {
     return null;
   }
 
