@@ -7,6 +7,10 @@ import {
   JMovementPlugin,
   KMovementPlugin,
   LMovementPlugin,
+  ZeroMovementPlugin,
+  CaretMovementPlugin,
+  DollarMovementPlugin,
+  GUnderscoreMovementPlugin,
 } from '@vim-engine/core';
 
 interface UseVimEngineOptions {
@@ -53,6 +57,10 @@ export function useVimEngine(options: UseVimEngineOptions = {}): UseVimEngineRet
     engine.registerPlugin(new JMovementPlugin());
     engine.registerPlugin(new KMovementPlugin());
     engine.registerPlugin(new LMovementPlugin());
+    engine.registerPlugin(new ZeroMovementPlugin());
+    engine.registerPlugin(new CaretMovementPlugin());
+    engine.registerPlugin(new DollarMovementPlugin());
+    engine.registerPlugin(new GUnderscoreMovementPlugin());
 
     engine.start();
     engineRef.current = engine;
