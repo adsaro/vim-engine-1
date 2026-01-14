@@ -182,6 +182,7 @@ export class VimExecutor {
    * - Stopping the executor
    * - Resetting keystroke count
    * - Clearing keystroke buffer
+   * - Resetting the count in execution context
    * - Destroying the error handler
    * - Destroying the debounce manager
    * - Clearing all registered plugins
@@ -202,6 +203,9 @@ export class VimExecutor {
 
     // Clear keystroke buffer
     this.clearKeystrokeBuffer();
+
+    // Reset the count in execution context
+    this.executionContext.setCount(0);
 
     // Clean up all components in reverse order of initialization
     if (this.errorHandler) {
@@ -387,6 +391,8 @@ export class VimExecutor {
    * Handles multi-key sequences by buffering keystrokes and checking
    * if they form a complete command.
    *
+   * Also handles numeric prefixes for count-based commands (e.g., '10G' jumps to line 10).
+   *
    * @param keystroke - The keystroke string to handle (e.g., 'h', '<Esc>', 'C-c')
    * @returns {void}
    *
@@ -396,6 +402,9 @@ export class VimExecutor {
    * executor.handleKeystroke('<Esc>'); // Return to normal mode
    * executor.handleKeystroke('g'); // Buffer 'g', waiting for next key
    * executor.handleKeystroke('e'); // Execute 'ge' command
+   * executor.handleKeystroke('1'); // Buffer '1'
+   * executor.handleKeystroke('0'); // Buffer '10'
+   * executor.handleKeystroke('G'); // Execute '10G' command
    * ```
    */
   handleKeystroke(keystroke: string): void {
@@ -404,12 +413,49 @@ export class VimExecutor {
 
     // Check if the buffered keystrokes form a complete command
     const bufferedKeystrokes = this.keystrokeBuffer.join('');
+
+    // Try to parse numeric prefix (e.g., '10G' -> count=10, command='G')
+    // First check if the entire buffer is just digits - if so, keep buffering
+    if (/^\d+$/.test(bufferedKeystrokes)) {
+      // Entire buffer is just digits - keep buffering
+      // Continue to normal matching
+    } else {
+      // Buffer is not just digits - try to match as numeric prefix + command
+      const numericMatch = bufferedKeystrokes.match(/^(\d+)(.+)$/);
+
+      if (numericMatch) {
+        const count = parseInt(numericMatch[1], 10);
+        const command = numericMatch[2];
+
+        // Set the count in the execution context
+        this.executionContext.setCount(count);
+
+        // Try to match the command without the numeric prefix
+        const matchedPlugin = this.commandRouter.matchPattern(command);
+        if (matchedPlugin) {
+          // We have a match - execute the command with count
+          this.commandRouter.executeSync(command, this.executionContext);
+          this.keystrokeCount++;
+          // Reset the count after executing the command
+          this.executionContext.setCount(0);
+          this.clearKeystrokeBuffer();
+          return;
+        } else {
+          // Command part is not a valid pattern - keep buffering
+          // Don't clear the buffer, continue to normal matching
+        }
+      }
+    }
+
+    // No numeric prefix or no match with numeric prefix - try normal matching
     const matchedPlugin = this.commandRouter.matchPattern(bufferedKeystrokes);
 
     if (matchedPlugin) {
       // We have a match - execute the command
       this.commandRouter.executeSync(bufferedKeystrokes, this.executionContext);
       this.keystrokeCount++;
+      // Reset the count after executing the command
+      this.executionContext.setCount(0);
       this.clearKeystrokeBuffer();
     } else {
       // Check if the buffered keystrokes could be a prefix of a valid command
@@ -417,12 +463,20 @@ export class VimExecutor {
         .getAllPatterns()
         .some((pattern) => pattern.startsWith(bufferedKeystrokes));
 
-      if (!couldBePrefix) {
-        // Not a valid prefix - try executing just the last keystroke
+      // Also keep buffering if the keystrokes are all digits (numeric prefix)
+      const isNumericPrefix = /^\d+$/.test(bufferedKeystrokes);
+
+      // Also keep buffering if we have a numeric prefix (e.g., '5g' waiting for 'gg')
+      const hasNumericPrefixPattern = /^\d+.+$/.test(bufferedKeystrokes);
+
+      if (!couldBePrefix && !isNumericPrefix && !hasNumericPrefixPattern) {
+        // Not a valid prefix and not numeric - try executing just the last keystroke
         const lastKeystrokeMatch = this.commandRouter.matchPattern(keystroke);
         if (lastKeystrokeMatch) {
           this.commandRouter.executeSync(keystroke, this.executionContext);
           this.keystrokeCount++;
+          // Reset the count after executing the command
+          this.executionContext.setCount(0);
         }
         this.clearKeystrokeBuffer();
       }

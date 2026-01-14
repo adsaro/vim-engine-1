@@ -18,6 +18,7 @@ import { MovementConfig } from '../base/MovementPlugin';
 import { CursorPosition } from '../../../state/CursorPosition';
 import { TextBuffer } from '../../../state/TextBuffer';
 import { VIM_MODE, VimMode } from '../../../state/VimMode';
+import { ExecutionContext } from '../../../plugin/ExecutionContext';
 
 /**
  * GGMovementPlugin - Jumps to first line of document
@@ -94,6 +95,42 @@ export class GGMovementPlugin extends DocumentNavigationPlugin {
   }
 
   /**
+   * Perform the movement action
+   *
+   * Overrides the base implementation to use count from execution context
+   * if available (set by VimExecutor when parsing numeric prefixes like '5gg').
+   *
+   * @param context - The execution context
+   */
+  protected performAction(context: ExecutionContext): void {
+    const cursor = context.getCursor();
+    const buffer = context.getBuffer();
+
+    if (buffer.isEmpty()) {
+      return;
+    }
+
+    // Get count from execution context (set by VimExecutor when parsing numeric prefixes)
+    const count = context.getCount();
+
+    // Create a config that uses the count
+    // If count is 1 (default) or less, use 1 to jump to first line
+    // If count > 1, use the count as the step value
+    const effectiveStep = count > 1 ? count : 1;
+
+    const configWithCount: Required<MovementConfig> = {
+      ...this.config,
+      step: effectiveStep,
+    };
+
+    const newPosition = this.calculateNewPosition(cursor, buffer, configWithCount);
+
+    if (this.validateMove(newPosition, buffer)) {
+      context.setCursor(newPosition);
+    }
+  }
+
+  /**
    * Calculate the target line number
    *
    * Implements the logic for determining which line to jump to based on
@@ -160,16 +197,15 @@ export class GGMovementPlugin extends DocumentNavigationPlugin {
   /**
    * Calculate new cursor position
    *
-   * Overrides the base class implementation to set the column to 0
-   * (the first character position of the line), matching Vim's standard behavior.
+   * Overrides the base class implementation to preserve the column position
+   * while moving to the target line.
    *
-   * In Vim, the gg command moves to column 0 of the target line, not preserving
-   * the current column position.
+   * The column is preserved within the bounds of the target line.
    *
    * @param cursor - The current cursor position
    * @param buffer - The text buffer
    * @param config - The movement configuration
-   * @returns The new cursor position with column set to 0
+   * @returns The new cursor position with preserved column
    */
   protected calculateNewPosition(
     cursor: CursorPosition,
@@ -187,7 +223,19 @@ export class GGMovementPlugin extends DocumentNavigationPlugin {
     // Clamp target line to valid buffer range
     const clampedLine = this.clampLine(targetLine, buffer);
 
-    // Return new position with column set to 0 (Vim standard behavior)
-    return new CursorPosition(clampedLine, 0, 0);
+    // Get target line content
+    const lineContent = buffer.getLine(clampedLine);
+
+    // If line doesn't exist (shouldn't happen with clamping), return current position
+    if (lineContent === null) {
+      return cursor.clone();
+    }
+
+    // Preserve desiredColumn and clamp to target line's length
+    const maxColumn = lineContent.length;
+    const newColumn = Math.min(cursor.desiredColumn, maxColumn);
+
+    // Return new position with preserved desiredColumn
+    return new CursorPosition(clampedLine, newColumn, cursor.desiredColumn);
   }
 }
