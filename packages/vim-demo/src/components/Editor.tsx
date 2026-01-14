@@ -163,7 +163,7 @@ export function Editor() {
           onKeyDown={handleKeyDown}
           onScroll={handleScroll}
           readOnly
-          className="w-full h-full bg-gray-900 text-gray-100 font-mono resize-none outline-none p-2"
+          className="w-full h-full bg-gray-900 text-gray-100 font-mono resize-none outline-none p-2 overflow-auto"
           style={{
             fontFamily: 'monospace',
             fontSize: '14px',

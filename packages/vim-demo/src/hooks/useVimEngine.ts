@@ -10,6 +10,7 @@ import {
   ZeroMovementPlugin,
   CaretMovementPlugin,
   DollarMovementPlugin,
+  PercentMovementPlugin,
   GUnderscoreMovementPlugin,
   GMovementPlugin,
   GGMovementPlugin,
@@ -62,6 +63,7 @@ export function useVimEngine(options: UseVimEngineOptions = {}): UseVimEngineRet
     engine.registerPlugin(new ZeroMovementPlugin());
     engine.registerPlugin(new CaretMovementPlugin());
     engine.registerPlugin(new DollarMovementPlugin());
+    engine.registerPlugin(new PercentMovementPlugin());
     engine.registerPlugin(new GUnderscoreMovementPlugin());
     // Document navigation plugins
     engine.registerPlugin(new GMovementPlugin());

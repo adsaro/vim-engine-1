@@ -12,3 +12,7 @@ export * from './lineUtils';
 
 // Buffer utilities
 export * from './bufferUtils';
+
+// Bracket utilities (for % keybinding - bracket matching)
+export * from './bracketTypes';
+export * from './bracketMatcher';

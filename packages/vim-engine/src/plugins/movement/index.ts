@@ -17,6 +17,9 @@ export * from './g-underscore';
 export * from './G';
 export * from './gg';
 
+// Bracket movement plugins
+export * from './percent';
+
 // Export w and w-capital with aliases to avoid naming conflicts
 export { WMovementPlugin as WordMovementPlugin } from './w';
 export { WMovementPlugin as CapitalWordMovementPlugin } from './w-capital';
