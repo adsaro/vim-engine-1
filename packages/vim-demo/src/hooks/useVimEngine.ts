@@ -11,6 +11,8 @@ import {
   CaretMovementPlugin,
   DollarMovementPlugin,
   GUnderscoreMovementPlugin,
+  GMovementPlugin,
+  GGMovementPlugin,
 } from '@vim-engine/core';
 
 interface UseVimEngineOptions {
@@ -61,6 +63,9 @@ export function useVimEngine(options: UseVimEngineOptions = {}): UseVimEngineRet
     engine.registerPlugin(new CaretMovementPlugin());
     engine.registerPlugin(new DollarMovementPlugin());
     engine.registerPlugin(new GUnderscoreMovementPlugin());
+    // Document navigation plugins
+    engine.registerPlugin(new GMovementPlugin());
+    engine.registerPlugin(new GGMovementPlugin());
 
     engine.start();
     engineRef.current = engine;

@@ -51,7 +51,8 @@ export function Editor() {
 
   // Scroll to cursor when it goes out of view
   useEffect(() => {
-    if (textareaRef.current) {
+    const textarea = textareaRef.current;
+    if (textarea) {
       const scrollInfo = calculateScrollToCursor(
         vimState.cursor.line,
         vimState.cursor.column,
@@ -59,11 +60,11 @@ export function Editor() {
       );
 
       // Only auto-scroll if cursor is not visible
-      if (textareaRef.current.scrollTop !== scrollInfo.scrollTop) {
-        textareaRef.current.scrollTop = scrollInfo.scrollTop;
+      if (textarea.scrollTop !== scrollInfo.scrollTop) {
+        textarea.scrollTop = scrollInfo.scrollTop;
       }
-      if (textareaRef.current.scrollLeft !== scrollInfo.scrollLeft) {
-        textareaRef.current.scrollLeft = scrollInfo.scrollLeft;
+      if (textarea.scrollLeft !== scrollInfo.scrollLeft) {
+        textarea.scrollLeft = scrollInfo.scrollLeft;
       }
     }
   }, [vimState.cursor.line, vimState.cursor.column, viewportInfo.viewportHeight, viewportInfo.viewportWidth]);
@@ -75,11 +76,18 @@ export function Editor() {
 
   // Update scroll position state
   const handleScroll = useCallback((event: React.UIEvent<HTMLTextAreaElement>) => {
-    setViewportInfo((prev) => ({
-      ...prev,
-      scrollTop: event.currentTarget.scrollTop,
-      scrollLeft: event.currentTarget.scrollLeft,
-    }));
+    try {
+      const target = event.currentTarget;
+      if (target) {
+        setViewportInfo((prev) => ({
+          ...prev,
+          scrollTop: target.scrollTop,
+          scrollLeft: target.scrollLeft,
+        }));
+      }
+    } catch (error) {
+      // Ignore scroll errors (can happen during rapid cursor movements)
+    }
   }, []);
 
   // Determine cursor style based on mode
