@@ -30,7 +30,8 @@ import { VIM_MODE, VimMode } from '../../../state/VimMode';
  * - [count]gg: Jump to line number [count] (1-based, as in vim)
  * - 0gg: Jump to first line (same as no count)
  *
- * Column position is preserved within the bounds of the target line.
+ * Column position is set to 0 (the first character position of the line),
+ * matching Vim's standard behavior.
  * The base class handles edge cases like empty buffers and line clamping.
  *
  * @example
@@ -43,10 +44,12 @@ import { VIM_MODE, VimMode } from '../../../state/VimMode';
  * const plugin = new GGMovementPlugin();
  * const newPos = plugin.execute(cursor, buffer, { step: 1 });
  * // newPos.line === 0 (first line)
+ * // newPos.column === 0 (first character position)
  *
  * // Jump to line 5 (5gg)
  * const newPos2 = plugin.execute(cursor, buffer, { step: 5 });
  * // newPos2.line === 4 (line 5 in 1-based, 4 in 0-based)
+ * // newPos2.column === 0 (first character position)
  * ```
  */
 export class GGMovementPlugin extends DocumentNavigationPlugin {
@@ -152,5 +155,39 @@ export class GGMovementPlugin extends DocumentNavigationPlugin {
     // Example: 5gg → config.step = 5 → return line 4 (0-based)
     // Example: 1gg → config.step = 1 → return line 0 (0-based, first line)
     return step - 1;
+  }
+
+  /**
+   * Calculate new cursor position
+   *
+   * Overrides the base class implementation to set the column to 0
+   * (the first character position of the line), matching Vim's standard behavior.
+   *
+   * In Vim, the gg command moves to column 0 of the target line, not preserving
+   * the current column position.
+   *
+   * @param cursor - The current cursor position
+   * @param buffer - The text buffer
+   * @param config - The movement configuration
+   * @returns The new cursor position with column set to 0
+   */
+  protected calculateNewPosition(
+    cursor: CursorPosition,
+    buffer: TextBuffer,
+    config: Required<MovementConfig>
+  ): CursorPosition {
+    // Handle empty buffer case
+    if (buffer.isEmpty()) {
+      return cursor.clone();
+    }
+
+    // Get target line using subclass implementation
+    const targetLine = this.getTargetLine(cursor, buffer, config);
+
+    // Clamp target line to valid buffer range
+    const clampedLine = this.clampLine(targetLine, buffer);
+
+    // Return new position with column set to 0 (Vim standard behavior)
+    return new CursorPosition(clampedLine, 0, 0);
   }
 }
