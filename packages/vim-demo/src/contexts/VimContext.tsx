@@ -20,6 +20,10 @@ import {
   CapitalBackwardMovementPlugin,
   EMovementPlugin,
   GeMovementPlugin,
+  ZeroMovementPlugin,
+  CaretMovementPlugin,
+  DollarMovementPlugin,
+  GUnderscoreMovementPlugin,
   ExecutionContext,
 } from '@vim-engine/core';
 
@@ -86,6 +90,10 @@ export function VimProvider({ children, initialContent = '' }: VimProviderProps)
     engine.registerPlugin(new CapitalBackwardMovementPlugin());
     engine.registerPlugin(new EMovementPlugin());
     engine.registerPlugin(new GeMovementPlugin());
+    engine.registerPlugin(new ZeroMovementPlugin());
+    engine.registerPlugin(new CaretMovementPlugin());
+    engine.registerPlugin(new DollarMovementPlugin());
+    engine.registerPlugin(new GUnderscoreMovementPlugin());
 
     engine.start();
 
