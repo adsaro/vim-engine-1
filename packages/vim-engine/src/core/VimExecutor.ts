@@ -45,6 +45,7 @@ import { VimMode, VimState } from '../state';
 import { CommandRouter } from './CommandRouter';
 import { DebounceManager } from './DebounceManager';
 import { ErrorHandler } from './ErrorHandler';
+import { MODIFIER_KEYS } from '../config/keyboard';
 
 /**
  * Default debounce time in milliseconds
@@ -83,8 +84,6 @@ export class VimExecutor {
   private _isRunning: boolean = false;
   private keystrokeCount: number = 0;
   private keystrokeBuffer: string[] = [];
-  private bufferTimeout: number | null = null;
-  private readonly BUFFER_TIMEOUT_MS = 1000; // Clear buffer after 1 second of inactivity
 
   /**
    * Create a new VimExecutor instance
@@ -372,6 +371,10 @@ export class VimExecutor {
    * ```
    */
   handleKeyboardEvent(event: KeyboardEvent): void {
+    // Skip modifier-only key events (Control, Alt, Shift, Meta)
+    if (MODIFIER_KEYS.includes(event.key)) {
+      return;
+    }
     // Process the keystroke
     const keystroke = this.extractKeystroke(event);
     this.handleKeystroke(keystroke);
@@ -399,9 +402,6 @@ export class VimExecutor {
     // Add keystroke to buffer
     this.keystrokeBuffer.push(keystroke);
 
-    // Reset buffer timeout
-    this.resetBufferTimeout();
-
     // Check if the buffered keystrokes form a complete command
     const bufferedKeystrokes = this.keystrokeBuffer.join('');
     const matchedPlugin = this.commandRouter.matchPattern(bufferedKeystrokes);
@@ -415,7 +415,7 @@ export class VimExecutor {
       // Check if the buffered keystrokes could be a prefix of a valid command
       const couldBePrefix = this.commandRouter
         .getAllPatterns()
-        .some(pattern => pattern.startsWith(bufferedKeystrokes));
+        .some((pattern) => pattern.startsWith(bufferedKeystrokes));
 
       if (!couldBePrefix) {
         // Not a valid prefix - try executing just the last keystroke
@@ -444,32 +444,6 @@ export class VimExecutor {
    */
   private clearKeystrokeBuffer(): void {
     this.keystrokeBuffer = [];
-    if (this.bufferTimeout !== null) {
-      clearTimeout(this.bufferTimeout);
-      this.bufferTimeout = null;
-    }
-  }
-
-  /**
-   * Reset the buffer timeout
-   *
-   * Clears the existing timeout and sets a new one to automatically
-   * clear the buffer after a period of inactivity.
-   *
-   * @returns {void}
-   *
-   * @example
-   * ```typescript
-   * executor.resetBufferTimeout();
-   * ```
-   */
-  private resetBufferTimeout(): void {
-    if (this.bufferTimeout !== null) {
-      clearTimeout(this.bufferTimeout);
-    }
-    this.bufferTimeout = setTimeout(() => {
-      this.clearKeystrokeBuffer();
-    }, this.BUFFER_TIMEOUT_MS) as unknown as number;
   }
 
   /**
