@@ -15,6 +15,7 @@ export * from './caret';
 export * from './dollar';
 export * from './g-underscore';
 export * from './G';
+export * from './gg';
 
 // Export w and w-capital with aliases to avoid naming conflicts
 export { WMovementPlugin as WordMovementPlugin } from './w';

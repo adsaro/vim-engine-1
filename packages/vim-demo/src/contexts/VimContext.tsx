@@ -24,6 +24,8 @@ import {
   CaretMovementPlugin,
   DollarMovementPlugin,
   GUnderscoreMovementPlugin,
+  GMovementPlugin,
+  GGMovementPlugin,
   ExecutionContext,
 } from '@vim-engine/core';
 
@@ -94,6 +96,9 @@ export function VimProvider({ children, initialContent = '' }: VimProviderProps)
     engine.registerPlugin(new CaretMovementPlugin());
     engine.registerPlugin(new DollarMovementPlugin());
     engine.registerPlugin(new GUnderscoreMovementPlugin());
+    // Document navigation plugins
+    engine.registerPlugin(new GMovementPlugin());
+    engine.registerPlugin(new GGMovementPlugin());
 
     engine.start();
 
