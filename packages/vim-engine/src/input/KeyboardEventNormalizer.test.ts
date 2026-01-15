@@ -1,7 +1,7 @@
 /**
  * KeyboardEventNormalizer unit tests
  */
-import { KeyboardEventNormalizer } from './input/KeyboardEventNormalizer';
+import { KeyboardEventNormalizer } from './KeyboardEventNormalizer';
 
 describe('KeyboardEventNormalizer', () => {
   let normalizer: KeyboardEventNormalizer;

@@ -26,6 +26,17 @@ export interface MatchResult {
 }
 
 /**
+ * Represents an intermediate result when scanning for a matching bracket.
+ * Used internally to track nesting depth during the search.
+ */
+interface DepthResult {
+  /** Current nesting depth */
+  depth: number;
+  /** Whether a matching bracket was found */
+  found: false;
+}
+
+/**
  * Find the matching bracket for a given position in a document.
  *
  * This function searches through the document to find the matching bracket
@@ -91,6 +102,170 @@ export function findMatchingBracket(
 }
 
 /**
+ * Process a character while searching for matching closing bracket.
+ *
+ * Updates the depth based on the character type and returns a result
+ * if the matching bracket is found.
+ *
+ * @param char - The character to process
+ * @param openBracket - The opening bracket character
+ * @param closeBracket - The closing bracket character
+ * @param depth - Current nesting depth
+ * @param line - Current line number
+ * @param column - Current column number
+ * @returns MatchResult if found, DepthResult otherwise
+ */
+function processCharacterForClose(
+  char: string,
+  openBracket: string,
+  closeBracket: string,
+  depth: number,
+  line: number,
+  column: number
+): MatchResult | DepthResult {
+  if (char === openBracket) {
+    return { depth: depth + 1, found: false };
+  }
+
+  if (char === closeBracket) {
+    const newDepth = depth - 1;
+    if (newDepth === 0) {
+      return { line, column, found: true };
+    }
+    return { depth: newDepth, found: false };
+  }
+
+  return { depth, found: false };
+}
+
+/**
+ * Process a character while searching for matching opening bracket.
+ *
+ * Updates the depth based on the character type and returns a result
+ * if the matching bracket is found.
+ *
+ * @param char - The character to process
+ * @param openBracket - The opening bracket character
+ * @param closeBracket - The closing bracket character
+ * @param depth - Current nesting depth
+ * @param line - Current line number
+ * @param column - Current column number
+ * @returns MatchResult if found, DepthResult otherwise
+ */
+function processCharacterForOpen(
+  char: string,
+  openBracket: string,
+  closeBracket: string,
+  depth: number,
+  line: number,
+  column: number
+): MatchResult | DepthResult {
+  if (char === closeBracket) {
+    // Same type closing bracket - increase depth
+    return { depth: depth + 1, found: false };
+  }
+
+  if (char === openBracket) {
+    // Matching opening bracket - decrease depth
+    const newDepth = depth - 1;
+    if (newDepth === 0) {
+      return { line, column, found: true };
+    }
+    return { depth: newDepth, found: false };
+  }
+
+  return { depth, found: false };
+}
+
+/**
+ * Scan a single line for matching closing bracket.
+ *
+ * @param line - The line content
+ * @param startColumn - Starting column in the line
+ * @param openBracket - The opening bracket character
+ * @param closeBracket - The closing bracket character
+ * @param initialDepth - Initial nesting depth
+ * @param lineNumber - The line number
+ * @returns MatchResult if found, or DepthResult if not found on this line
+ */
+function scanLineForClose(
+  line: string,
+  startColumn: number,
+  openBracket: string,
+  closeBracket: string,
+  initialDepth: number,
+  lineNumber: number
+): MatchResult | DepthResult {
+  let depth = initialDepth;
+
+  for (let column = startColumn; column < line.length; column++) {
+    const char = line[column];
+    const result = processCharacterForClose(
+      char,
+      openBracket,
+      closeBracket,
+      depth,
+      lineNumber,
+      column
+    );
+
+    if (result.found) {
+      return result;
+    }
+
+    // Update depth for next iteration
+    depth = (result as DepthResult).depth;
+  }
+
+  return { depth, found: false };
+}
+
+/**
+ * Scan a single line for matching opening bracket.
+ *
+ * Scans backward from the starting column to find the matching opening bracket.
+ *
+ * @param line - The line content
+ * @param startColumn - Starting column in the line (inclusive)
+ * @param openBracket - The opening bracket character
+ * @param closeBracket - The closing bracket character
+ * @param initialDepth - Initial nesting depth
+ * @param lineNumber - The line number
+ * @returns MatchResult if found, or DepthResult if not found on this line
+ */
+function scanLineForOpen(
+  line: string,
+  startColumn: number,
+  openBracket: string,
+  closeBracket: string,
+  initialDepth: number,
+  lineNumber: number
+): MatchResult | DepthResult {
+  let depth = initialDepth;
+
+  for (let column = startColumn; column >= 0; column--) {
+    const char = line[column];
+    const result = processCharacterForOpen(
+      char,
+      openBracket,
+      closeBracket,
+      depth,
+      lineNumber,
+      column
+    );
+
+    if (result.found) {
+      return result;
+    }
+
+    // Update depth for next iteration
+    depth = (result as DepthResult).depth;
+  }
+
+  return { depth, found: false };
+}
+
+/**
  * Find the matching closing bracket for an opening bracket.
  *
  * Searches forward from the opening bracket position, tracking nesting depth.
@@ -110,42 +285,33 @@ function findMatchingClose(
   closeBracket: string
 ): MatchResult {
   const lineCount = buffer.getLineCount();
-
-  // Start at depth 1 (we're on the opening bracket)
-  let depth = 1;
   let currentLine = startLine;
   let currentColumn = startColumn + 1;
+  let depth = 1;
 
   while (currentLine < lineCount) {
     const line = buffer.getLine(currentLine);
     if (line === null) break;
 
-    const lineLength = line.length;
+    const result = scanLineForClose(
+      line,
+      currentColumn,
+      openBracket,
+      closeBracket,
+      depth,
+      currentLine
+    );
 
-    while (currentColumn < lineLength) {
-      const char = line[currentColumn];
-
-      if (char === openBracket) {
-        // Same type opening bracket - increase depth
-        depth++;
-      } else if (char === closeBracket) {
-        // Matching closing bracket - decrease depth
-        depth--;
-        if (depth === 0) {
-          // Found the matching bracket
-          return { line: currentLine, column: currentColumn, found: true };
-        }
-      }
-
-      currentColumn++;
+    if (result.found) {
+      return result;
     }
 
-    // Move to next line
+    // Update depth for next iteration
+    depth = (result as DepthResult).depth;
     currentLine++;
     currentColumn = 0;
   }
 
-  // No matching bracket found
   return { line: startLine, column: startColumn, found: false };
 }
 
@@ -177,23 +343,22 @@ function findMatchingOpen(
     const line = buffer.getLine(currentLine);
     if (line === null) break;
 
-    while (currentColumn >= 0) {
-      const char = line[currentColumn];
+    // Scan current line for matching opening bracket
+    const result = scanLineForOpen(
+      line,
+      currentColumn,
+      openBracket,
+      closeBracket,
+      depth,
+      currentLine
+    );
 
-      if (char === closeBracket) {
-        // Same type closing bracket - increase depth
-        depth++;
-      } else if (char === openBracket) {
-        // Matching opening bracket - decrease depth
-        depth--;
-        if (depth === 0) {
-          // Found the matching bracket
-          return { line: currentLine, column: currentColumn, found: true };
-        }
-      }
-
-      currentColumn--;
+    if (result.found) {
+      return result;
     }
+
+    // Update depth for next iteration
+    depth = (result as DepthResult).depth;
 
     // Move to previous line
     currentLine--;
@@ -208,7 +373,83 @@ function findMatchingOpen(
 }
 
 /**
+ * Try to find a matching bracket at the current position.
+ *
+ * Checks if the character at the given position is an opening bracket,
+ * and if so, finds its matching closing bracket.
+ *
+ * @param buffer - The TextBuffer to search
+ * @param currentLine - Current line number
+ * @param currentColumn - Current column number
+ * @returns MatchResult if found, null otherwise
+ */
+function tryFindMatchAtPosition(
+  buffer: TextBuffer,
+  currentLine: number,
+  currentColumn: number
+): MatchResult | null {
+  const line = buffer.getLine(currentLine);
+  if (line === null) {
+    return null;
+  }
+
+  const char = line[currentColumn];
+
+  if (!isOpenBracket(char)) {
+    return null;
+  }
+
+  const pair = getBracketPair(char);
+  if (!pair) {
+    return null;
+  }
+
+  const result = findMatchingClose(
+    buffer,
+    currentLine,
+    currentColumn,
+    pair.open,
+    pair.close
+  );
+
+  return result.found ? result : null;
+}
+
+/**
+ * Scan a line starting from a given column to find a matching bracket.
+ *
+ * Iterates through each position in the line starting from the specified column,
+ * attempting to find a bracket and its match.
+ *
+ * @param buffer - The TextBuffer to search
+ * @param line - The line content
+ * @param startColumn - Starting column
+ * @param lineNumber - Line number
+ * @returns MatchResult if found, null otherwise
+ */
+function scanLineForNextBracket(
+  buffer: TextBuffer,
+  line: string,
+  startColumn: number,
+  lineNumber: number
+): MatchResult | null {
+  const lineLength = line.length;
+
+  for (let column = startColumn; column < lineLength; column++) {
+    const result = tryFindMatchAtPosition(buffer, lineNumber, column);
+    if (result) {
+      return result;
+    }
+  }
+
+  return null;
+}
+
+/**
  * Search forward for the next opening bracket and find its matching closing bracket.
+ *
+ * Iterates through lines starting from the specified position, scanning each line
+ * for an opening bracket and finding its matching closing bracket.
  *
  * @param buffer - The TextBuffer to search
  * @param startLine - Starting line
@@ -226,31 +467,13 @@ function findNextBracketAndMatch(
 
   while (currentLine < lineCount) {
     const line = buffer.getLine(currentLine);
-    if (line === null) break;
+    if (line === null) {
+      break;
+    }
 
-    const lineLength = line.length;
-
-    while (currentColumn < lineLength) {
-      const char = line[currentColumn];
-
-      if (isOpenBracket(char)) {
-        // Found an opening bracket - find its match
-        const pair = getBracketPair(char);
-        if (pair) {
-          const result = findMatchingClose(
-            buffer,
-            currentLine,
-            currentColumn,
-            pair.open,
-            pair.close
-          );
-          if (result.found) {
-            return result;
-          }
-        }
-      }
-
-      currentColumn++;
+    const result = scanLineForNextBracket(buffer, line, currentColumn, currentLine);
+    if (result) {
+      return result;
     }
 
     // Move to next line

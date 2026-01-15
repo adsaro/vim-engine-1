@@ -100,36 +100,99 @@ export abstract class WordMovementPlugin extends MovementPlugin {
     _config: Required<MovementConfig>
     // config parameter reserved for future use (e.g., count-based multi-step word movement)
   ): CursorPosition {
-    const lineCount = buffer.getLineCount();
-    const startLine = this.direction === 'forward' ? cursor.line + 1 : cursor.line - 1;
-    const endLine = this.direction === 'forward' ? lineCount : -1;
-    const step = this.direction === 'forward' ? 1 : -1;
+    const { startLine, endLine, step } = this.getLoopParameters(cursor, buffer);
 
     for (let line = startLine; line !== endLine; line += step) {
       const lineContent = buffer.getLine(line) ?? '';
 
-      // For forward movement, find the first non-whitespace character
-      // This matches Vim's behavior where w moves to the start of the next WORD
-      if (this.direction === 'forward') {
-        const boundary = this.findBoundary(lineContent, 0, true);
-
-        if (boundary !== null && boundary < lineContent.length) {
-          // Update desiredColumn to preserve this column position for vertical movement
-          return new CursorPosition(line, boundary, boundary);
-        }
-      }
-
-      // For backward movement, start from end of line
-      const searchColumn = this.direction === 'forward' ? 0 : lineContent.length;
-      const boundary = this.findBoundary(lineContent, searchColumn, true);
-
-      if (boundary !== null) {
-        // Update desiredColumn to preserve this column position for vertical movement
-        return new CursorPosition(line, boundary, boundary);
+      const result = this.searchLineForBoundary(line, lineContent);
+      if (result !== null) {
+        return result;
       }
     }
 
     return cursor.clone();
+  }
+
+  /**
+   * Calculate loop parameters for multi-line traversal
+   * @returns Object containing startLine, endLine, and step values
+   */
+  private getLoopParameters(
+    cursor: CursorPosition,
+    buffer: TextBuffer
+  ): { startLine: number; endLine: number; step: number } {
+    const lineCount = buffer.getLineCount();
+
+    if (this.direction === 'forward') {
+      return {
+        startLine: cursor.line + 1,
+        endLine: lineCount,
+        step: 1,
+      };
+    }
+
+    return {
+      startLine: cursor.line - 1,
+      endLine: -1,
+      step: -1,
+    };
+  }
+
+  /**
+   * Search a single line for a word boundary
+   * @param line - The line number
+   * @param lineContent - The content of the line
+   * @returns CursorPosition if boundary found, null otherwise
+   */
+  private searchLineForBoundary(
+    line: number,
+    lineContent: string
+  ): CursorPosition | null {
+    if (this.direction === 'forward') {
+      return this.searchForward(line, lineContent);
+    }
+
+    return this.searchBackward(line, lineContent);
+  }
+
+  /**
+   * Search forward for the first non-whitespace character
+   * Matches Vim's behavior where w moves to the start of the next WORD
+   * @param line - The line number
+   * @param lineContent - The content of the line
+   * @returns CursorPosition if boundary found, null otherwise
+   */
+  private searchForward(
+    line: number,
+    lineContent: string
+  ): CursorPosition | null {
+    const boundary = this.findBoundary(lineContent, 0, true);
+
+    if (boundary !== null && boundary < lineContent.length) {
+      return new CursorPosition(line, boundary, boundary);
+    }
+
+    return null;
+  }
+
+  /**
+   * Search backward starting from the end of the line
+   * @param line - The line number
+   * @param lineContent - The content of the line
+   * @returns CursorPosition if boundary found, null otherwise
+   */
+  private searchBackward(
+    line: number,
+    lineContent: string
+  ): CursorPosition | null {
+    const boundary = this.findBoundary(lineContent, lineContent.length, true);
+
+    if (boundary !== null) {
+      return new CursorPosition(line, boundary, boundary);
+    }
+
+    return null;
   }
 
   /**

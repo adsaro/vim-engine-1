@@ -162,26 +162,54 @@ export abstract class MovementPlugin extends AbstractVimPlugin {
    * @param buffer - The text buffer
    * @returns {boolean} True if the move is valid
    */
+  /**
+   * Check if buffer is empty (has no lines)
+   */
+  private isBufferEmpty(buffer: TextBuffer): boolean {
+    return buffer.getLineCount() === 0;
+  }
+
+  /**
+   * Check if line number is within valid buffer bounds
+   */
+  private isLineValid(line: number, lineCount: number): boolean {
+    return line >= 0 && line < lineCount;
+  }
+
+  /**
+   * Check if column number is within valid line bounds
+   */
+  private isColumnValid(column: number, lineLength: number): boolean {
+    return column >= 0 && column <= lineLength;
+  }
+
+  /**
+   * Get line content, returning null if line doesn't exist
+   */
+  private getLineSafe(buffer: TextBuffer, line: number): string | null {
+    return buffer.getLine(line);
+  }
+
   protected validateMove(newPosition: CursorPosition, buffer: TextBuffer): boolean {
+    // Check if buffer is empty
+    if (this.isBufferEmpty(buffer)) {
+      return false;
+    }
+
+    // Check if line number is within valid bounds
     const lineCount = buffer.getLineCount();
-    if (lineCount === 0) {
+    if (!this.isLineValid(newPosition.line, lineCount)) {
       return false;
     }
 
-    if (newPosition.line < 0 || newPosition.line >= lineCount) {
-      return false;
-    }
-
-    const line = buffer.getLine(newPosition.line);
+    // Get line content
+    const line = this.getLineSafe(buffer, newPosition.line);
     if (line === null) {
       return false;
     }
 
-    if (newPosition.column < 0 || newPosition.column > line.length) {
-      return false;
-    }
-
-    return true;
+    // Check if column number is within valid bounds
+    return this.isColumnValid(newPosition.column, line.length);
   }
 
   /**

@@ -160,36 +160,74 @@ export abstract class LineMovementPlugin extends MovementPlugin {
    * // newPosition.column will be 0
    * ```
    */
+  /**
+   * Check if count requires line movement
+   * Returns true if count > 1 (requires moving to a different line)
+   */
+  private requiresLineMovement(count: number): boolean {
+    return count > 1;
+  }
+
+  /**
+   * Calculate target line number with count applied
+   * Moves down (count - 1) lines from current position
+   */
+  private calculateTargetLine(cursor: CursorPosition, count: number): number {
+    return cursor.line + (count - 1);
+  }
+
+  /**
+   * Clamp line number to valid buffer bounds
+   * Ensures line is within [0, lineCount - 1]
+   */
+  private clampLineToBuffer(line: number, lineCount: number): number {
+    return Math.min(Math.max(0, line), lineCount - 1);
+  }
+
+  /**
+   * Get line content or return null if line doesn't exist
+   */
+  private getLineOrReturnNull(buffer: TextBuffer, line: number): string | null {
+    return buffer.getLine(line);
+  }
+
+  /**
+   * Calculate final cursor position on a specific line
+   * Applies line movement logic and clamps column to valid range
+   */
+  private calculatePositionOnLine(
+    line: string,
+    lineNum: number,
+    cursor: CursorPosition
+  ): CursorPosition {
+    const targetColumn = this.calculateLinePosition(line, cursor);
+    const clampedColumn = clampColumn(targetColumn, line);
+    return new CursorPosition(lineNum, clampedColumn);
+  }
+
   protected handleCountMovement(
     cursor: CursorPosition,
     buffer: TextBuffer,
     count: number
   ): CursorPosition {
-    // Handle invalid counts (0 or negative)
-    if (count <= 1) {
-      // Count of 1 means no line movement, just apply line movement
+    // Handle counts that don't require line movement
+    if (!this.requiresLineMovement(count)) {
       return this.calculateNewPosition(cursor, buffer, this.config);
     }
 
-    // Calculate target line (move down count - 1 lines)
-    const targetLine = cursor.line + (count - 1);
-
-    // Clamp to buffer bounds
+    // Calculate and clamp target line
+    const targetLine = this.calculateTargetLine(cursor, count);
     const lineCount = buffer.getLineCount();
-    const clampedLine = Math.min(Math.max(0, targetLine), lineCount - 1);
+    const clampedLine = this.clampLineToBuffer(targetLine, lineCount);
 
-    // Get the target line
-    const line = buffer.getLine(clampedLine);
+    // Get the target line content
+    const line = this.getLineOrReturnNull(buffer, clampedLine);
     if (line === null) {
       return cursor;
     }
 
-    // Calculate target column on the new line
-    const targetColumn = this.calculateLinePosition(line, cursor);
-    const clampedColumn = clampColumn(targetColumn, line);
-
-    // Return new position
-    return new CursorPosition(clampedLine, clampedColumn);
+    // Calculate final position on the target line
+    return this.calculatePositionOnLine(line, clampedLine, cursor);
   }
 
   /**

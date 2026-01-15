@@ -610,10 +610,51 @@ export function findPreviousWORDStart(
 }
 
 /**
+ * Skip whitespace characters backward from a given position
+ *
+ * @param line - The line content to search
+ * @param pos - The starting position (0-based index)
+ * @returns The position after skipping whitespace, or -1 if went past start
+ *
+ * @example
+ * ```typescript
+ * skipWhitespaceBackward('hello   world', 10); // 7 (position after skipping spaces)
+ * skipWhitespaceBackward('hello', 4); // 4 (no whitespace to skip)
+ * ```
+ */
+function skipWhitespaceBackward(line: string, pos: number): number {
+  while (pos >= 0 && getCharType(line[pos]) === 'whitespace') {
+    pos--;
+  }
+  return pos;
+}
+
+/**
+ * Skip non-whitespace characters (WORD characters) backward from a given position
+ *
+ * @param line - The line content to search
+ * @param pos - The starting position (0-based index)
+ * @returns The position after skipping non-whitespace characters
+ *
+ * @example
+ * ```typescript
+ * skipNonWhitespaceBackward('hello', 4); // -1 (skipped all characters)
+ * skipNonWhitespaceBackward('hello', 2); // -1 (skipped from position 2)
+ * ```
+ */
+function skipNonWhitespaceBackward(line: string, pos: number): number {
+  while (pos >= 0 && getCharType(line[pos]) !== 'whitespace') {
+    pos--;
+  }
+  return pos;
+}
+
+/**
  * Find the end of the previous WORD
  *
  * Searches backward from the given column position to find the end
- * of the previous WORD.
+ * of the previous WORD. A WORD is defined as a sequence of non-whitespace
+ * characters (including punctuation).
  *
  * @param line - The line content to search
  * @param column - The starting column position
@@ -631,19 +672,17 @@ export function findPreviousWORDEnd(line: string, column: number): number | null
     return null;
   }
 
-  let i = column - 1;
+  let pos = column - 1;
 
   // Skip whitespace at end
-  while (i >= 0 && getCharType(line[i]) === 'whitespace') {
-    i--;
-  }
-  if (i < 0) {
+  pos = skipWhitespaceBackward(line, pos);
+  if (pos < 0) {
     return null;
   }
 
   // Skip non-whitespace characters (WORD characters) backward
-  while (i >= 0 && getCharType(line[i]) !== 'whitespace') {
-    i--;
-  }
-  return i + 1;
+  // The position after skipping is one before the WORD start,
+  // so we add 1 to get the WORD end
+  pos = skipNonWhitespaceBackward(line, pos);
+  return pos + 1;
 }
