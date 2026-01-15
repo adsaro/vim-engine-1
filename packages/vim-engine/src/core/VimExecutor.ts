@@ -408,80 +408,154 @@ export class VimExecutor {
    * ```
    */
   handleKeystroke(keystroke: string): void {
-    // Add keystroke to buffer
     this.keystrokeBuffer.push(keystroke);
-
-    // Check if the buffered keystrokes form a complete command
     const bufferedKeystrokes = this.keystrokeBuffer.join('');
 
-    // Try to parse numeric prefix (e.g., '10G' -> count=10, command='G')
-    // First check if the entire buffer is just digits - if so, keep buffering
-    if (/^\d+$/.test(bufferedKeystrokes)) {
-      // Entire buffer is just digits - keep buffering
-      // Continue to normal matching
-    } else {
-      // Buffer is not just digits - try to match as numeric prefix + command
-      const numericMatch = bufferedKeystrokes.match(/^(\d+)(.+)$/);
-
-      if (numericMatch) {
-        const count = parseInt(numericMatch[1], 10);
-        const command = numericMatch[2];
-
-        // Set the count in the execution context
-        this.executionContext.setCount(count);
-
-        // Try to match the command without the numeric prefix
-        const matchedPlugin = this.commandRouter.matchPattern(command);
-        if (matchedPlugin) {
-          // We have a match - execute the command with count
-          this.commandRouter.executeSync(command, this.executionContext);
-          this.keystrokeCount++;
-          // Reset the count after executing the command
-          this.executionContext.setCount(0);
-          this.clearKeystrokeBuffer();
-          return;
-        } else {
-          // Command part is not a valid pattern - keep buffering
-          // Don't clear the buffer, continue to normal matching
-        }
-      }
+    // Try to match with numeric prefix first
+    if (this.tryMatchNumericPrefix(bufferedKeystrokes)) {
+      return;
     }
 
-    // No numeric prefix or no match with numeric prefix - try normal matching
+    // Try to match the full buffer without numeric prefix
+    if (this.tryMatchFullBuffer(bufferedKeystrokes)) {
+      return;
+    }
+
+    // No match - decide whether to keep buffering or clear
+    this.handleNoMatch(bufferedKeystrokes, keystroke);
+  }
+
+  /**
+   * Try to match keystrokes as a numeric prefix + command pattern
+   *
+   * @param bufferedKeystrokes - The buffered keystrokes to match
+   * @returns {boolean} True if matched and executed, false otherwise
+   */
+  private tryMatchNumericPrefix(bufferedKeystrokes: string): boolean {
+    // Skip if buffer is just digits - continue to normal matching
+    if (this.isAllDigits(bufferedKeystrokes)) {
+      return false;
+    }
+
+    const numericMatch = bufferedKeystrokes.match(/^(\d+)(.+)$/);
+    if (!numericMatch) {
+      return false;
+    }
+
+    const count = parseInt(numericMatch[1], 10);
+    const command = numericMatch[2];
+
+    this.executionContext.setCount(count);
+
+    const matchedPlugin = this.commandRouter.matchPattern(command);
+    if (matchedPlugin) {
+      this.executeCommand(command);
+      return true;
+    }
+
+    // Reset count since command didn't match
+    this.executionContext.setCount(0);
+    return false;
+  }
+
+  /**
+   * Try to match the full buffer as a command pattern
+   *
+   * @param bufferedKeystrokes - The buffered keystrokes to match
+   * @returns {boolean} True if matched and executed, false otherwise
+   */
+  private tryMatchFullBuffer(bufferedKeystrokes: string): boolean {
     const matchedPlugin = this.commandRouter.matchPattern(bufferedKeystrokes);
 
     if (matchedPlugin) {
-      // We have a match - execute the command
-      this.commandRouter.executeSync(bufferedKeystrokes, this.executionContext);
-      this.keystrokeCount++;
-      // Reset the count after executing the command
-      this.executionContext.setCount(0);
-      this.clearKeystrokeBuffer();
-    } else {
-      // Check if the buffered keystrokes could be a prefix of a valid command
-      const couldBePrefix = this.commandRouter
-        .getAllPatterns()
-        .some((pattern) => pattern.startsWith(bufferedKeystrokes));
-
-      // Also keep buffering if the keystrokes are all digits (numeric prefix)
-      const isNumericPrefix = /^\d+$/.test(bufferedKeystrokes);
-
-      // Also keep buffering if we have a numeric prefix (e.g., '5g' waiting for 'gg')
-      const hasNumericPrefixPattern = /^\d+.+$/.test(bufferedKeystrokes);
-
-      if (!couldBePrefix && !isNumericPrefix && !hasNumericPrefixPattern) {
-        // Not a valid prefix and not numeric - try executing just the last keystroke
-        const lastKeystrokeMatch = this.commandRouter.matchPattern(keystroke);
-        if (lastKeystrokeMatch) {
-          this.commandRouter.executeSync(keystroke, this.executionContext);
-          this.keystrokeCount++;
-          // Reset the count after executing the command
-          this.executionContext.setCount(0);
-        }
-        this.clearKeystrokeBuffer();
-      }
-      // Otherwise, keep buffering and wait for more keystrokes
+      this.executeCommand(bufferedKeystrokes);
+      return true;
     }
+
+    return false;
+  }
+
+  /**
+   * Handle the case when no pattern matched the buffered keystrokes
+   *
+   * @param bufferedKeystrokes - The buffered keystrokes that didn't match
+   * @param lastKeystroke - The last keystroke that was added
+   * @returns {void}
+   */
+  private handleNoMatch(bufferedKeystrokes: string, lastKeystroke: string): void {
+    if (this.shouldKeepBuffering(bufferedKeystrokes)) {
+      return;
+    }
+
+    // Try to execute just the last keystroke
+    this.tryExecuteLastKeystroke(lastKeystroke);
+    this.clearKeystrokeBuffer();
+  }
+
+  /**
+   * Check if the buffer should continue waiting for more keystrokes
+   *
+   * @param bufferedKeystrokes - The buffered keystrokes to check
+   * @returns {boolean} True if should keep buffering, false otherwise
+   */
+  private shouldKeepBuffering(bufferedKeystrokes: string): boolean {
+    // Check if buffer could be a prefix of a valid command
+    const couldBePrefix = this.commandRouter
+      .getAllPatterns()
+      .some((pattern) => pattern.startsWith(bufferedKeystrokes));
+
+    // Keep buffering if it's a prefix, all digits, or has numeric prefix
+    return (
+      couldBePrefix ||
+      this.isAllDigits(bufferedKeystrokes) ||
+      this.hasNumericPrefix(bufferedKeystrokes)
+    );
+  }
+
+  /**
+   * Try to execute just the last keystroke
+   *
+   * @param keystroke - The keystroke to execute
+   * @returns {void}
+   */
+  private tryExecuteLastKeystroke(keystroke: string): void {
+    const matchedPlugin = this.commandRouter.matchPattern(keystroke);
+    if (matchedPlugin) {
+      this.executeCommand(keystroke);
+    }
+  }
+
+  /**
+   * Execute a command and reset state
+   *
+   * @param command - The command pattern to execute
+   * @returns {void}
+   */
+  private executeCommand(command: string): void {
+    this.commandRouter.executeSync(command, this.executionContext);
+    this.keystrokeCount++;
+    this.executionContext.setCount(0);
+    this.clearKeystrokeBuffer();
+  }
+
+  /**
+   * Check if a string consists only of digits
+   *
+   * @param str - The string to check
+   * @returns {boolean} True if all digits, false otherwise
+   */
+  private isAllDigits(str: string): boolean {
+    return /^\d+$/.test(str);
+  }
+
+  /**
+   * Check if a string has a numeric prefix followed by other characters
+   *
+   * @param str - The string to check
+   * @returns {boolean} True if has numeric prefix, false otherwise
+   */
+  private hasNumericPrefix(str: string): boolean {
+    return /^\d+.+$/.test(str);
   }
 
   /**
@@ -499,6 +573,21 @@ export class VimExecutor {
   private clearKeystrokeBuffer(): void {
     this.keystrokeBuffer = [];
   }
+
+  /**
+   * Mapping of special keys to their vim representation
+   */
+  private static readonly SPECIAL_KEY_MAP: Record<string, string> = {
+    Enter: '<Enter>',
+    Escape: '<Esc>',
+    Tab: '<Tab>',
+    Backspace: '<BS>',
+    Delete: '<Del>',
+    ArrowUp: '<Up>',
+    ArrowDown: '<Down>',
+    ArrowLeft: '<Left>',
+    ArrowRight: '<Right>',
+  };
 
   /**
    * Extract keystroke string from keyboard event
@@ -526,33 +615,52 @@ export class VimExecutor {
     const key = event.key;
 
     if (key.length === 1) {
-      let keystroke = key;
-
-      if (event.ctrlKey) {
-        keystroke = `C-${keystroke}`;
-      }
-      if (event.altKey) {
-        keystroke = `A-${keystroke}`;
-      }
-      if (event.shiftKey && key >= 'a' && key <= 'z') {
-        keystroke = key.toUpperCase();
-      }
-
-      return keystroke;
+      return this.applyModifiers(key, event.ctrlKey, event.altKey, event.shiftKey);
     }
 
-    // Handle special keys
-    if (key === 'Enter') return '<Enter>';
-    if (key === 'Escape') return '<Esc>';
-    if (key === 'Tab') return '<Tab>';
-    if (key === 'Backspace') return '<BS>';
-    if (key === 'Delete') return '<Del>';
-    if (key === 'ArrowUp') return '<Up>';
-    if (key === 'ArrowDown') return '<Down>';
-    if (key === 'ArrowLeft') return '<Left>';
-    if (key === 'ArrowRight') return '<Right>';
+    return this.getSpecialKeyRepresentation(key);
+  }
 
-    return key;
+  /**
+   * Apply modifier prefixes to a single character key
+   *
+   * @param key - The single character key
+   * @param ctrlKey - Whether Ctrl is pressed
+   * @param altKey - Whether Alt is pressed
+   * @param shiftKey - Whether Shift is pressed
+   * @returns {string} The key with appropriate modifiers
+   */
+  private applyModifiers(
+    key: string,
+    ctrlKey: boolean,
+    altKey: boolean,
+    shiftKey: boolean,
+  ): string {
+    let keystroke = key;
+
+    if (shiftKey && key >= 'a' && key <= 'z') {
+      keystroke = key.toUpperCase();
+    }
+
+    if (ctrlKey) {
+      keystroke = `C-${keystroke}`;
+    }
+
+    if (altKey) {
+      keystroke = `A-${keystroke}`;
+    }
+
+    return keystroke;
+  }
+
+  /**
+   * Get vim representation of a special key
+   *
+   * @param key - The special key name
+   * @returns {string} The vim representation, or the original key if not found
+   */
+  private getSpecialKeyRepresentation(key: string): string {
+    return VimExecutor.SPECIAL_KEY_MAP[key] ?? key;
   }
 
   /**

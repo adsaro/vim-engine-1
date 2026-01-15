@@ -82,31 +82,68 @@ export class KeyboardEventNormalizer {
       return this.extractModifiers(event) + key;
     }
 
-    // Determine if we have non-shift modifiers
-    const hasNonShiftModifiers = event.ctrlKey || event.altKey || event.metaKey;
-    const hasOnlyShift = event.shiftKey && !hasNonShiftModifiers;
-
     // Handle single character keys
     if (key.length === 1) {
-      // If only shift is pressed, return the key as-is (it will be uppercase)
-      if (hasOnlyShift) {
-        return key;
-      }
-      // If we have other modifiers, build the modifier prefix
-      if (hasNonShiftModifiers) {
-        return this.extractModifiers(event) + key + '>';
-      }
-      return key;
-    } else {
-      // Special key or multi-character key
-      if (hasNonShiftModifiers) {
-        return this.extractModifiers(event) + this.normalizeSpecialKey(key) + '>';
-      }
-      if (event.shiftKey) {
-        return '<S-' + this.normalizeSpecialKey(key) + '>';
-      }
-      return this.normalizeSpecialKey(key);
+      return this.normalizeSingleCharKey(event, key);
     }
+
+    // Handle special keys
+    return this.normalizeSpecialKeyWithModifiers(event, key);
+  }
+
+  /**
+   * Normalizes a single character key with modifiers
+   *
+   * @param event - The keyboard event
+   * @param key - The single character key
+   * @returns {string} The normalized keystroke
+   */
+  private normalizeSingleCharKey(event: KeyboardEvent, key: string): string {
+    const hasNonShiftModifiers = this.hasNonShiftModifiers(event);
+    const hasOnlyShift = event.shiftKey && !hasNonShiftModifiers;
+
+    // If only shift is pressed, return the key as-is (it will be uppercase)
+    if (hasOnlyShift) {
+      return key;
+    }
+
+    // If we have other modifiers, build the modifier prefix
+    if (hasNonShiftModifiers) {
+      return this.extractModifiers(event) + key + '>';
+    }
+
+    return key;
+  }
+
+  /**
+   * Normalizes a special key with modifiers
+   *
+   * @param event - The keyboard event
+   * @param key - The special key name
+   * @returns {string} The normalized keystroke
+   */
+  private normalizeSpecialKeyWithModifiers(event: KeyboardEvent, key: string): string {
+    const hasNonShiftModifiers = this.hasNonShiftModifiers(event);
+
+    if (hasNonShiftModifiers) {
+      return this.extractModifiers(event) + this.normalizeSpecialKey(key) + '>';
+    }
+
+    if (event.shiftKey) {
+      return '<S-' + this.normalizeSpecialKey(key) + '>';
+    }
+
+    return this.normalizeSpecialKey(key);
+  }
+
+  /**
+   * Checks if the event has non-shift modifiers (ctrl, alt, meta)
+   *
+   * @param event - The keyboard event
+   * @returns {boolean} True if the event has non-shift modifiers
+   */
+  private hasNonShiftModifiers(event: KeyboardEvent): boolean {
+    return event.ctrlKey || event.altKey || event.metaKey;
   }
 
   /**

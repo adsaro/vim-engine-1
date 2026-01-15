@@ -4,6 +4,7 @@
 import { VimExecutor } from './index';
 import { VimPlugin, ExecutionContext, PluginRegistry } from '../plugin/index';
 import { VimMode, VIM_MODE } from '../state/index';
+import { vi } from 'vitest';
 
 describe('VimExecutor', () => {
   let executor: VimExecutor;
@@ -64,7 +65,8 @@ describe('VimExecutor', () => {
       it('should work with mock dependencies for testing', () => {
         const mockContext = {
           getMode: () => VIM_MODE.NORMAL,
-          setMode: jest.fn(),
+          setMode: vi.fn(),
+          setCount: vi.fn(),
           getState: () => ({
             mode: VIM_MODE.NORMAL,
             cursor: { row: 0, col: 0 },
@@ -451,16 +453,16 @@ function createMockPlugin(name: string, patterns: string[] = ['test']): VimPlugi
     description: `Test plugin: ${name}`,
     patterns,
     modes: ['NORMAL' as VimMode],
-    initialize: jest.fn(),
-    destroy: jest.fn(),
-    execute: jest.fn(),
-    canExecute: jest.fn().mockReturnValue(true),
-    validatePattern: jest.fn().mockReturnValue(true),
-    onRegister: jest.fn(),
-    onUnregister: jest.fn(),
-    enable: jest.fn(),
-    disable: jest.fn(),
-    isEnabled: jest.fn().mockReturnValue(true),
+    initialize: vi.fn(),
+    destroy: vi.fn(),
+    execute: vi.fn(),
+    canExecute: vi.fn().mockReturnValue(true),
+    validatePattern: vi.fn().mockReturnValue(true),
+    onRegister: vi.fn(),
+    onUnregister: vi.fn(),
+    enable: vi.fn(),
+    disable: vi.fn(),
+    isEnabled: vi.fn().mockReturnValue(true),
   };
 }
 
