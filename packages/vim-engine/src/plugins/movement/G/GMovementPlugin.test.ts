@@ -74,7 +74,7 @@ describe('GMovementPlugin', () => {
       plugin.execute(context);
 
       expect(context.getCursor().line).toBe(4); // Last line (0-based)
-      expect(context.getCursor().column).toBe(3); // Column preserved
+      expect(context.getCursor().column).toBe(0); // Column set to 0
     });
 
     it('should jump to last line from first line', () => {
@@ -87,7 +87,7 @@ describe('GMovementPlugin', () => {
       plugin.execute(context);
 
       expect(context.getCursor().line).toBe(4); // Last line (0-based)
-      expect(context.getCursor().column).toBe(2); // Column preserved
+      expect(context.getCursor().column).toBe(0); // Column set to 0
     });
 
     it('should stay on last line when already there', () => {
@@ -100,7 +100,7 @@ describe('GMovementPlugin', () => {
       plugin.execute(context);
 
       expect(context.getCursor().line).toBe(4); // Still on last line
-      expect(context.getCursor().column).toBe(1);
+      expect(context.getCursor().column).toBe(0); // Column set to 0
     });
 
     it('should handle single line buffer', () => {
@@ -113,7 +113,7 @@ describe('GMovementPlugin', () => {
       plugin.execute(context);
 
       expect(context.getCursor().line).toBe(0); // Only line
-      expect(context.getCursor().column).toBe(3);
+      expect(context.getCursor().column).toBe(0); // Column set to 0
     });
 
     it('should handle empty buffer', () => {
@@ -129,7 +129,7 @@ describe('GMovementPlugin', () => {
       expect(context.getCursor().column).toBe(0);
     });
 
-    it('should preserve column when jumping to last line', () => {
+    it('should set column to 0 when jumping to last line', () => {
       const plugin = new GMovementPlugin();
       const state = new VimState('line1\nline2\nline3\nline4\nline5');
       state.cursor = new CursorPosition(1, 5);
@@ -139,7 +139,7 @@ describe('GMovementPlugin', () => {
       plugin.execute(context);
 
       expect(context.getCursor().line).toBe(4);
-      expect(context.getCursor().column).toBe(5); // Column preserved
+      expect(context.getCursor().column).toBe(0); // Column set to 0
     });
   });
 
@@ -154,7 +154,7 @@ describe('GMovementPlugin', () => {
       plugin.execute(context);
 
       expect(context.getCursor().line).toBe(9); // Line 10 in 1-based = 9 in 0-based
-      expect(context.getCursor().column).toBe(2);
+      expect(context.getCursor().column).toBe(0); // Column set to 0
     });
 
     it('should jump to line 1 with 1G (0-based: 0)', () => {
@@ -167,7 +167,7 @@ describe('GMovementPlugin', () => {
       plugin.execute(context);
 
       expect(context.getCursor().line).toBe(0); // Line 1 in 1-based = 0 in 0-based
-      expect(context.getCursor().column).toBe(2);
+      expect(context.getCursor().column).toBe(0); // Column set to 0
     });
 
     it('should jump to line 2 with 2G (0-based: 1)', () => {
@@ -180,7 +180,7 @@ describe('GMovementPlugin', () => {
       plugin.execute(context);
 
       expect(context.getCursor().line).toBe(1); // Line 2 in 1-based = 1 in 0-based
-      expect(context.getCursor().column).toBe(2);
+      expect(context.getCursor().column).toBe(0); // Column set to 0
     });
 
     it('should jump to line 5 with 5G (0-based: 4)', () => {
@@ -193,7 +193,7 @@ describe('GMovementPlugin', () => {
       plugin.execute(context);
 
       expect(context.getCursor().line).toBe(4); // Line 5 in 1-based = 4 in 0-based
-      expect(context.getCursor().column).toBe(2);
+      expect(context.getCursor().column).toBe(0); // Column set to 0
     });
 
     it('should clamp to last line when count exceeds buffer size', () => {
@@ -206,7 +206,7 @@ describe('GMovementPlugin', () => {
       plugin.execute(context);
 
       expect(context.getCursor().line).toBe(4); // Clamped to last line (0-based)
-      expect(context.getCursor().column).toBe(2);
+      expect(context.getCursor().column).toBe(0); // Column set to 0
     });
 
     it('should handle 0G as jump to last line (same as G)', () => {
@@ -219,7 +219,7 @@ describe('GMovementPlugin', () => {
       plugin.execute(context);
 
       expect(context.getCursor().line).toBe(4); // Last line
-      expect(context.getCursor().column).toBe(2);
+      expect(context.getCursor().column).toBe(0); // Column set to 0
     });
 
     it('should handle very large count values', () => {
@@ -232,10 +232,10 @@ describe('GMovementPlugin', () => {
       plugin.execute(context);
 
       expect(context.getCursor().line).toBe(2); // Clamped to last line
-      expect(context.getCursor().column).toBe(1);
+      expect(context.getCursor().column).toBe(0); // Column set to 0
     });
 
-    it('should preserve column when jumping to specific line', () => {
+    it('should set column to 0 when jumping to specific line', () => {
       const plugin = new GMovementPlugin({ step: 3 });
       const state = new VimState('line1\nline2\nline3\nline4\nline5');
       state.cursor = new CursorPosition(0, 5);
@@ -245,12 +245,12 @@ describe('GMovementPlugin', () => {
       plugin.execute(context);
 
       expect(context.getCursor().line).toBe(2); // Line 3 in 1-based = 2 in 0-based
-      expect(context.getCursor().column).toBe(5); // Column preserved
+      expect(context.getCursor().column).toBe(0); // Column set to 0
     });
   });
 
-  describe('Column Preservation', () => {
-    it('should preserve column when moving to longer line', () => {
+  describe('Column Position', () => {
+    it('should set column to 0 when moving to longer line', () => {
       const plugin = new GMovementPlugin();
       const state = new VimState('short\nvery long line here\nshort');
       state.cursor = new CursorPosition(0, 3);
@@ -260,10 +260,10 @@ describe('GMovementPlugin', () => {
       plugin.execute(context);
 
       expect(context.getCursor().line).toBe(2);
-      expect(context.getCursor().column).toBe(3); // Preserved within bounds
+      expect(context.getCursor().column).toBe(0); // Column set to 0
     });
 
-    it('should clamp column when moving to shorter line', () => {
+    it('should set column to 0 when moving to shorter line', () => {
       const plugin = new GMovementPlugin({ step: 2 });
       const state = new VimState('very long line here\nshort\nvery long line here');
       state.cursor = new CursorPosition(0, 10);
@@ -273,10 +273,10 @@ describe('GMovementPlugin', () => {
       plugin.execute(context);
 
       expect(context.getCursor().line).toBe(1);
-      expect(context.getCursor().column).toBe(5); // Clamped to 'short' length
+      expect(context.getCursor().column).toBe(0); // Column set to 0
     });
 
-    it('should preserve desiredColumn across movements', () => {
+    it('should set column to 0 across movements', () => {
       const plugin = new GMovementPlugin();
       const state = new VimState('line1\nab\nline3\nline4\nline5');
       state.cursor = new CursorPosition(0, 5);
@@ -286,7 +286,7 @@ describe('GMovementPlugin', () => {
       // First G: jump to last line
       plugin.execute(context);
       expect(context.getCursor().line).toBe(4);
-      expect(context.getCursor().column).toBe(5);
+      expect(context.getCursor().column).toBe(0);
 
       // Move cursor to line 0 manually
       context.setCursor(new CursorPosition(0, 5));
@@ -294,10 +294,10 @@ describe('GMovementPlugin', () => {
       // Second G: jump to last line again
       plugin.execute(context);
       expect(context.getCursor().line).toBe(4);
-      expect(context.getCursor().column).toBe(5);
+      expect(context.getCursor().column).toBe(0);
     });
 
-    it('should handle column preservation with count prefix', () => {
+    it('should set column to 0 with count prefix', () => {
       const plugin = new GMovementPlugin({ step: 3 });
       const state = new VimState('line1\nline2\nline3\nline4\nline5');
       state.cursor = new CursorPosition(0, 4);
@@ -307,10 +307,10 @@ describe('GMovementPlugin', () => {
       plugin.execute(context);
 
       expect(context.getCursor().line).toBe(2);
-      expect(context.getCursor().column).toBe(4);
+      expect(context.getCursor().column).toBe(0); // Column set to 0
     });
 
-    it('should clamp column to line length when moving to shorter line with count', () => {
+    it('should set column to 0 when moving to shorter line with count', () => {
       const plugin = new GMovementPlugin({ step: 2 });
       const state = new VimState('very long line here\nab\nline3');
       state.cursor = new CursorPosition(0, 10);
@@ -320,7 +320,7 @@ describe('GMovementPlugin', () => {
       plugin.execute(context);
 
       expect(context.getCursor().line).toBe(1);
-      expect(context.getCursor().column).toBe(2); // Clamped to 'ab' length
+      expect(context.getCursor().column).toBe(0); // Column set to 0
     });
   });
 
@@ -409,7 +409,7 @@ describe('GMovementPlugin', () => {
       plugin.execute(context);
 
       expect(context.getCursor().line).toBe(0);
-      expect(context.getCursor().column).toBe(3);
+      expect(context.getCursor().column).toBe(0); // Column set to 0
     });
 
     it('should handle single line buffer with count prefix', () => {
@@ -422,7 +422,7 @@ describe('GMovementPlugin', () => {
       plugin.execute(context);
 
       expect(context.getCursor().line).toBe(0);
-      expect(context.getCursor().column).toBe(3);
+      expect(context.getCursor().column).toBe(0); // Column set to 0
     });
 
     it('should handle very large count values', () => {
@@ -435,7 +435,7 @@ describe('GMovementPlugin', () => {
       plugin.execute(context);
 
       expect(context.getCursor().line).toBe(2); // Clamped to last line
-      expect(context.getCursor().column).toBe(1);
+      expect(context.getCursor().column).toBe(0); // Column set to 0
     });
 
     it('should handle moving between lines with different lengths', () => {
@@ -448,14 +448,14 @@ describe('GMovementPlugin', () => {
       // Jump to last line
       plugin.execute(context);
       expect(context.getCursor().line).toBe(4);
-      expect(context.getCursor().column).toBe(10); // Preserved within bounds
+      expect(context.getCursor().column).toBe(0); // Column set to 0
 
       // Jump to line 3 (short line)
       context.setCursor(new CursorPosition(0, 10));
       const plugin2 = new GMovementPlugin({ step: 3 });
       plugin2.execute(context);
       expect(context.getCursor().line).toBe(2);
-      expect(context.getCursor().column).toBe(10); // Preserved within bounds
+      expect(context.getCursor().column).toBe(0); // Column set to 0
     });
 
     it('should handle count of 1 (jump to line 1)', () => {
@@ -468,7 +468,7 @@ describe('GMovementPlugin', () => {
       plugin.execute(context);
 
       expect(context.getCursor().line).toBe(0); // Line 1 (0-based: 0)
-      expect(context.getCursor().column).toBe(2);
+      expect(context.getCursor().column).toBe(0); // Column set to 0
     });
 
     it('should handle multiple G movements', () => {
@@ -528,7 +528,7 @@ describe('GMovementPlugin', () => {
       plugin.execute(context);
 
       expect(context.getCursor().line).toBe(2);
-      expect(context.getCursor().column).toBe(5); // Clamped to 'line3' length
+      expect(context.getCursor().column).toBe(0); // Column set to 0
     });
 
     it('should handle column beyond all line lengths', () => {
@@ -541,7 +541,7 @@ describe('GMovementPlugin', () => {
       plugin.execute(context);
 
       expect(context.getCursor().line).toBe(2);
-      expect(context.getCursor().column).toBe(2); // Clamped to 'ef' length
+      expect(context.getCursor().column).toBe(0); // Column set to 0
     });
   });
 
