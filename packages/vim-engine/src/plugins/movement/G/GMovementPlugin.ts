@@ -207,15 +207,15 @@ export class GMovementPlugin extends DocumentNavigationPlugin {
   /**
    * Calculate new cursor position
    *
-   * Overrides the base class implementation to preserve the column position
-   * while moving to the target line.
+   * Overrides the base class implementation to set the column position to 0
+   * while moving to the target line, matching Vim's standard behavior for G.
    *
-   * The column is preserved within the bounds of the target line.
+   * The column is set to 0 (the first character position of the line).
    *
    * @param cursor - The current cursor position
    * @param buffer - The text buffer
    * @param config - The movement configuration
-   * @returns The new cursor position with preserved column
+   * @returns The new cursor position with column set to 0
    */
   protected calculateNewPosition(
     cursor: CursorPosition,
@@ -241,11 +241,7 @@ export class GMovementPlugin extends DocumentNavigationPlugin {
       return cursor.clone();
     }
 
-    // Preserve desiredColumn and clamp to target line's length
-    const maxColumn = lineContent.length;
-    const newColumn = Math.min(cursor.desiredColumn, maxColumn);
-
-    // Return new position with preserved desiredColumn
-    return new CursorPosition(clampedLine, newColumn, cursor.desiredColumn);
+    // Set column to 0 (first character position), matching Vim's G behavior
+    return new CursorPosition(clampedLine, 0, 0);
   }
 }
