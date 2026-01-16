@@ -460,40 +460,31 @@ function scanLineForNextBracket(
 /**
  * Scan forward for the next bracket and find its matching counterpart.
  *
- * Iterates through lines starting from the specified position, scanning each line
- * for any bracket (open or close) and finding its matching counterpart.
+ * Only searches within the current line. If no bracket is found on this line,
+ * returns the start position without searching other lines.
  *
  * @param buffer - The TextBuffer to search
  * @param startLine - Starting line
  * @param startColumn - Starting column
- * @returns MatchResult with the position of the matching bracket, or not found
+ * @returns MatchResult with the position of the matching bracket, or start position if not found
  */
 function findNextBracketAndMatch(
   buffer: TextBuffer,
   startLine: number,
   startColumn: number
 ): MatchResult {
-  const lineCount = buffer.getLineCount();
-  let currentLine = startLine;
-  let currentColumn = startColumn;
-
-  while (currentLine < lineCount) {
-    const line = buffer.getLine(currentLine);
-    if (line === null) {
-      break;
-    }
-
-    const result = scanLineForNextBracket(buffer, line, currentColumn, currentLine);
-    if (result) {
-      return result;
-    }
-
-    // Move to next line
-    currentLine++;
-    currentColumn = 0;
+  const line = buffer.getLine(startLine);
+  if (line === null) {
+    return { line: startLine, column: startColumn, found: false };
   }
 
-  // No bracket pair found
+  // Only search within the current line
+  const result = scanLineForNextBracket(buffer, line, startColumn, startLine);
+  if (result) {
+    return result;
+  }
+
+  // No bracket found on this line - return start position
   return { line: startLine, column: startColumn, found: false };
 }
 

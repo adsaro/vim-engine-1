@@ -334,13 +334,9 @@ describe('bracketMatcher', () => {
         ]);
         const cursor = new CursorPosition(1, 2);
         const result = findMatchingBracket(buffer, cursor);
-        // When cursor is not on a bracket, search forward finds next bracket
-        // The first bracket after line 1 col 2 is the closing bracket on line 2 at column 0
-        // Since it's a closing bracket, we search backward for the matching opening bracket
-        // The opening bracket is on line 0 at column 7
-        expect(result.found).toBe(true);
-        expect(result.line).toBe(0);
-        expect(result.column).toBe(7);
+        // Cursor is on line 1 which has no brackets, so return not found
+        // We only search within the current line
+        expect(result.found).toBe(false);
       });
     });
 
