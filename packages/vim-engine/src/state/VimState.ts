@@ -103,6 +103,16 @@ export class VimState {
   commandHistory: string[];
 
   /**
+   * Current search pattern being built during search mode
+   */
+  private _currentSearchPattern: string = '';
+
+  /**
+   * Last successfully matched search pattern (for n/N commands)
+   */
+  private _lastSearchPattern: string = '';
+
+  /**
    * Create a new VimState
    *
    * @param initialContent - Initial text content (string or TextBuffer)
@@ -316,6 +326,76 @@ export class VimState {
   }
 
   /**
+   * Get the current search pattern being built
+   *
+   * @returns {string} The current search pattern
+   *
+   * @example
+   * ```typescript
+   * const pattern = state.getCurrentSearchPattern();
+   * ```
+   */
+  getCurrentSearchPattern(): string {
+    return this._currentSearchPattern;
+  }
+
+  /**
+   * Set the current search pattern
+   *
+   * @param pattern - The search pattern to set
+   *
+   * @example
+   * ```typescript
+   * state.setCurrentSearchPattern('hello');
+   * ```
+   */
+  setCurrentSearchPattern(pattern: string): void {
+    this._currentSearchPattern = pattern;
+  }
+
+  /**
+   * Get the last successfully matched search pattern
+   *
+   * @returns {string} The last search pattern
+   *
+   * @example
+   * ```typescript
+   * const lastPattern = state.getLastSearchPattern();
+   * ```
+   */
+  getLastSearchPattern(): string {
+    return this._lastSearchPattern;
+  }
+
+  /**
+   * Set the last successfully matched search pattern
+   *
+   * @param pattern - The search pattern to save
+   *
+   * @example
+   * ```typescript
+   * state.setLastSearchPattern('hello');
+   * ```
+   */
+  setLastSearchPattern(pattern: string): void {
+    this._lastSearchPattern = pattern;
+  }
+
+  /**
+   * Clear the current search pattern
+   *
+   * @returns {void}
+   *
+   * @example
+   * ```typescript
+   * state.clearSearchPattern();
+   * ```
+   */
+  clearSearchPattern(): void {
+    this._currentSearchPattern = '';
+  }
+
+  /**
    * Create a deep copy of this state
    *
    * @returns {VimState} A new state with copied content
@@ -349,6 +429,10 @@ export class VimState {
     cloned.searchHistory = [...this.searchHistory];
     cloned.commandHistory = [...this.commandHistory];
 
+    // Clone search patterns
+    cloned._currentSearchPattern = this._currentSearchPattern;
+    cloned._lastSearchPattern = this._lastSearchPattern;
+
     return cloned;
   }
 
@@ -375,5 +459,9 @@ export class VimState {
     this.changeList = [];
     this.searchHistory = [];
     this.commandHistory = [];
+
+    // Clear search patterns
+    this._currentSearchPattern = '';
+    this._lastSearchPattern = '';
   }
 }

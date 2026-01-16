@@ -8,7 +8,7 @@ const CHAR_WIDTH = 8.4; // Approximate monospace character width
 const TEXTAREA_PADDING_LEFT = 8; // Padding on the textarea
 
 export function Editor() {
-  const { vimState, content, handleKeyDown } = useVim();
+  const { vimState, content, searchPattern, handleKeyDown, handleSearchChange, handleSearchKeyDown } = useVim();
   const [viewportInfo, setViewportInfo] = useState<ViewportInfo>({
     scrollTop: 0,
     scrollLeft: 0,
@@ -112,6 +112,8 @@ export function Editor() {
         return { ...baseStyle, backgroundColor: '#ef4444', opacity: 0.8 };
       case VIM_MODE.SELECT:
         return { ...baseStyle, backgroundColor: '#f97316', opacity: 0.8 };
+      case VIM_MODE.SEARCH:
+        return { ...baseStyle, backgroundColor: '#f59e0b', opacity: 0.8 };
       default:
         return { ...baseStyle, backgroundColor: '#3b82f6', opacity: 0.8 };
     }
@@ -180,6 +182,22 @@ export function Editor() {
 
         {/* Cursor overlay */}
         <div ref={cursorRef} style={getCursorStyle()} className="pointer-events-none" />
+
+        {/* Search input overlay */}
+        {vimState.mode === VIM_MODE.SEARCH && (
+          <div className="search-overlay absolute bottom-0 left-0 right-0 bg-gray-800 p-2 flex items-center border-t border-gray-700">
+            <span className="search-prompt text-yellow-400 mr-2 font-mono">/</span>
+            <input
+              type="text"
+              value={searchPattern}
+              onChange={(e) => handleSearchChange(e.target.value)}
+              onKeyDown={handleSearchKeyDown}
+              className="search-input flex-1 bg-transparent text-white outline-none font-mono"
+              autoFocus
+              placeholder="Search..."
+            />
+          </div>
+        )}
       </div>
     </div>
   );

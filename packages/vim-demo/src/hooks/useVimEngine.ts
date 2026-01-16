@@ -14,6 +14,7 @@ import {
   GUnderscoreMovementPlugin,
   GMovementPlugin,
   GGMovementPlugin,
+  SearchPlugin,
 } from '@vim-engine/core';
 
 interface UseVimEngineOptions {
@@ -68,6 +69,9 @@ export function useVimEngine(options: UseVimEngineOptions = {}): UseVimEngineRet
     // Document navigation plugins
     engine.registerPlugin(new GMovementPlugin());
     engine.registerPlugin(new GGMovementPlugin());
+
+    // Register search plugin
+    engine.registerPlugin(new SearchPlugin());
 
     engine.start();
     engineRef.current = engine;
