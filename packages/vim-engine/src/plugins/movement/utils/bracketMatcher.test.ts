@@ -334,11 +334,8 @@ describe('bracketMatcher', () => {
         ]);
         const cursor = new CursorPosition(1, 2);
         const result = findMatchingBracket(buffer, cursor);
-        // When cursor is not on a bracket, search forward finds next opening bracket
-        // On line 0 there's an opening bracket at col 6, findMatchingClose finds closing at line 2 col 0
-        // But findNextBracketAndMatch only finds brackets starting from current position,
-        // so it starts at line 1 col 2 and finds nothing, then line 2 has ')', not '('
-        // So no opening bracket is found after the cursor position
+        // Cursor is on line 1 which has no brackets, so return not found
+        // We only search within the current line
         expect(result.found).toBe(false);
       });
     });
@@ -695,8 +692,8 @@ describe('bracketMatcher', () => {
           '  return result;',
           '}',
         ]);
-        // Line 0: 'function calculate(a, b) {' - { at column 20, } at line 3 column 0
-        const cursor = new CursorPosition(0, 20);
+        // Line 0: 'function calculate(a, b) {' - { at column 25
+        const cursor = new CursorPosition(0, 25);
         const result = findMatchingBracket(buffer, cursor);
         expect(result.line).toBe(3);
         expect(result.column).toBe(0);
