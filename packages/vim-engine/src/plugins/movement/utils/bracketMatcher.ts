@@ -375,8 +375,8 @@ function findMatchingOpen(
 /**
  * Try to find a matching bracket at the current position.
  *
- * Checks if the character at the given position is an opening bracket,
- * and if so, finds its matching closing bracket.
+ * Checks if the character at the given position is a bracket,
+ * and finds its matching counterpart (open→close forward, close→open backward).
  *
  * @param buffer - The TextBuffer to search
  * @param currentLine - Current line number
@@ -395,7 +395,7 @@ function tryFindMatchAtPosition(
 
   const char = line[currentColumn];
 
-  if (!isOpenBracket(char)) {
+  if (!isBracket(char)) {
     return null;
   }
 
@@ -404,15 +404,27 @@ function tryFindMatchAtPosition(
     return null;
   }
 
-  const result = findMatchingClose(
-    buffer,
-    currentLine,
-    currentColumn,
-    pair.open,
-    pair.close
-  );
-
-  return result.found ? result : null;
+  if (isOpenBracket(char)) {
+    // Opening bracket - search forward for matching close
+    const result = findMatchingClose(
+      buffer,
+      currentLine,
+      currentColumn,
+      pair.open,
+      pair.close
+    );
+    return result.found ? result : null;
+  } else {
+    // Closing bracket - search backward for matching open
+    const result = findMatchingOpen(
+      buffer,
+      currentLine,
+      currentColumn,
+      pair.open,
+      pair.close
+    );
+    return result.found ? result : null;
+  }
 }
 
 /**
@@ -446,15 +458,15 @@ function scanLineForNextBracket(
 }
 
 /**
- * Search forward for the next opening bracket and find its matching closing bracket.
+ * Scan forward for the next bracket and find its matching counterpart.
  *
  * Iterates through lines starting from the specified position, scanning each line
- * for an opening bracket and finding its matching closing bracket.
+ * for any bracket (open or close) and finding its matching counterpart.
  *
  * @param buffer - The TextBuffer to search
  * @param startLine - Starting line
  * @param startColumn - Starting column
- * @returns MatchResult with the position of the matching closing bracket, or not found
+ * @returns MatchResult with the position of the matching bracket, or not found
  */
 function findNextBracketAndMatch(
   buffer: TextBuffer,
