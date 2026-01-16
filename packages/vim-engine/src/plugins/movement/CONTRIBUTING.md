@@ -1140,9 +1140,448 @@ Don't import unnecessary modules. Keep each plugin self-contained where possible
 
 ---
 
+## Creating Search Movement Plugins
+
+Search movement plugins extend the standard movement plugin pattern to provide pattern-based navigation functionality. This section covers the specific considerations and patterns for creating search-related plugins.
+
+### Search Plugin Architecture
+
+Search plugins follow a different architecture than standard movement plugins:
+
+1. **Search Initiation Plugins** - Start search operations and manage mode transitions
+2. **Search Input Handler** - Collects and manages search pattern input
+3. **Search Navigation Plugins** - Navigate between search matches
+4. **Search Utilities** - Core search algorithms and helper functions
+
+### Shared State Management
+
+Search plugins use a shared `SearchInputManager` to maintain consistent state:
+
+```typescript
+import { SearchInputManager } from '../utils/searchInputManager';
+
+// Create once and share across plugins
+const searchInputManager = new SearchInputManager();
+
+// Pass to plugins that need it
+const forwardPlugin = new SearchForwardPlugin(searchInputManager);
+const backwardPlugin = new SearchBackwardPlugin(searchInputManager);
+const inputHandlerPlugin = new SearchInputHandlerPlugin(searchInputManager);
+```
+
+### Creating Search Initiation Plugins
+
+Search initiation plugins (like `/` and `?`) extend `AbstractVimPlugin` and manage mode transitions:
+
+```typescript
+/**
+ * CustomSearchInitiationPlugin - Example search initiation plugin
+ *
+ * Implements a custom search initiation command.
+ */
+import { AbstractVimPlugin } from '../../../plugin/AbstractVimPlugin';
+import { VIM_MODE } from '../../../state/VimMode';
+import { SearchInputManager } from '../utils/searchInputManager';
+
+export class CustomSearchInitiationPlugin extends AbstractVimPlugin {
+  readonly name = 'movement-custom-search';
+  readonly version = '1.0.0';
+  readonly description = 'Custom search initiation command';
+  readonly patterns = ['<custom-key>'];
+  readonly modes = [VIM_MODE.NORMAL, VIM_MODE.VISUAL];
+
+  private searchInputManager: SearchInputManager;
+
+  constructor(searchInputManager: SearchInputManager) {
+    super(
+      'movement-custom-search',
+      'Custom search initiation command',
+      ['<custom-key>'],
+      [VIM_MODE.NORMAL, VIM_MODE.VISUAL]
+    );
+    this.searchInputManager = searchInputManager;
+  }
+
+  protected performAction(context: ExecutionContextType): void {
+    // Start search input with appropriate direction
+    this.searchInputManager.start('forward');
+
+    // Transition to SEARCH_INPUT mode
+    context.setMode(VIM_MODE.SEARCH_INPUT);
+  }
+}
+```
+
+### Creating Search Navigation Plugins
+
+Search navigation plugins (like `n` and `N`) use search utilities to find and navigate to matches:
+
+```typescript
+/**
+ * CustomSearchNavigationPlugin - Example search navigation plugin
+ *
+ * Implements a custom search navigation command.
+ */
+import { AbstractVimPlugin } from '../../../plugin/AbstractVimPlugin';
+import { VIM_MODE } from '../../../state/VimMode';
+import { CursorPosition } from '../../../state/CursorPosition';
+import { TextBuffer } from '../../../state/TextBuffer';
+import { patternToRegex, findAllMatches, findNextMatch } from '../utils/searchUtils';
+
+export class CustomSearchNavigationPlugin extends AbstractVimPlugin {
+  readonly name = 'movement-custom-nav';
+  readonly version = '1.0.0';
+  readonly description = 'Custom search navigation command';
+  readonly patterns = ['<custom-nav-key>'];
+  readonly modes = [VIM_MODE.NORMAL, VIM_MODE.VISUAL];
+
+  // Store last search pattern
+  private lastPattern: string | null = null;
+  private lastDirection: 'forward' | 'backward' = 'forward';
+
+  protected performAction(context: ExecutionContextType): void {
+    // Check if we have a search pattern
+    if (!this.lastPattern) {
+      return;
+    }
+
+    // Get current state
+    const cursor = context.getCursor();
+    const buffer = context.getBuffer();
+
+    // Convert pattern to regex
+    const regex = patternToRegex(this.lastPattern);
+    if (!regex) {
+      return;
+    }
+
+    // Find all matches
+    const matches = findAllMatches(
+      buffer,
+      regex,
+      cursor.line,
+      this.lastDirection
+    );
+
+    // Find next match
+    const nextMatch = findNextMatch(
+      matches,
+      cursor,
+      this.lastDirection,
+      true // wrap
+    );
+
+    // Move cursor to match
+    if (nextMatch) {
+      context.setCursor(nextMatch);
+    }
+  }
+
+  /**
+   * Set the search pattern for navigation
+   */
+  setSearchPattern(pattern: string, direction: 'forward' | 'backward'): void {
+    this.lastPattern = pattern;
+    this.lastDirection = direction;
+  }
+}
+```
+
+### Using Search Utilities
+
+Search utilities provide core functionality for search operations:
+
+#### Finding All Matches
+
+```typescript
+import { findAllMatches } from '../utils/searchUtils';
+
+const buffer = context.getBuffer();
+const pattern = /function\s+\w+/g;
+const matches = findAllMatches(buffer, pattern, 0, 'forward');
+
+// matches is an array of CursorPosition objects
+```
+
+#### Finding Next Match
+
+```typescript
+import { findNextMatch } from '../utils/searchUtils';
+
+const cursor = context.getCursor();
+const nextMatch = findNextMatch(matches, cursor, 'forward', true);
+
+// nextMatch is a CursorPosition or null
+```
+
+#### Extracting Word Under Cursor
+
+```typescript
+import { extractWordUnderCursor } from '../utils/searchUtils';
+
+const buffer = context.getBuffer();
+const cursor = context.getCursor();
+const word = extractWordUnderCursor(buffer, cursor);
+
+// word is a string or null
+```
+
+#### Converting Pattern to Regex
+
+```typescript
+import { patternToRegex } from '../utils/searchUtils';
+
+const regex = patternToRegex('hello');
+// regex is /hello/g or null if invalid
+```
+
+### Search Input Manager API
+
+The `SearchInputManager` provides methods for managing search input state:
+
+```typescript
+import { SearchInputManager } from '../utils/searchInputManager';
+
+const manager = new SearchInputManager();
+
+// Start search input
+manager.start('forward');
+
+// Add characters
+manager.addChar('h');
+manager.addChar('e');
+manager.addChar('l');
+manager.addChar('l');
+manager.addChar('o');
+
+// Delete characters
+manager.deleteChar();
+
+// Move cursor within pattern
+manager.moveCursor(-1);
+
+// Get current state
+const state = manager.getState();
+// { isActive: true, direction: 'forward', pattern: 'hell', cursorPosition: 3 }
+
+// Complete search
+const result = manager.complete();
+// { pattern: 'hell', direction: 'forward' }
+
+// Cancel search
+manager.cancel();
+```
+
+### Implementation Checklist for Search Plugins
+
+#### Search Initiation Plugins
+
+1. Extend `AbstractVimPlugin`
+2. Define key pattern (e.g., `/`, `?`)
+3. Accept `SearchInputManager` in constructor
+4. Implement `performAction()` to:
+   - Start search input with direction
+   - Transition to SEARCH_INPUT mode
+5. Support NORMAL and VISUAL modes
+
+#### Search Navigation Plugins
+
+1. Extend `AbstractVimPlugin`
+2. Define key pattern (e.g., `n`, `N`)
+3. Store last search pattern and direction
+4. Implement `performAction()` to:
+   - Check for existing search pattern
+   - Convert pattern to regex
+   - Find all matches using `findAllMatches()`
+   - Find next match using `findNextMatch()`
+   - Move cursor to match
+5. Support NORMAL and VISUAL modes
+
+#### Search Input Handler Plugins
+
+1. Extend `AbstractVimPlugin`
+2. Define patterns for characters, backspace, enter, escape
+3. Accept `SearchInputManager` in constructor
+4. Implement `performAction()` to:
+   - Add characters to pattern
+   - Delete characters from pattern
+   - Complete or cancel search
+   - Execute search on Enter
+5. Only active in SEARCH_INPUT mode
+
+### Testing Search Plugins
+
+Search plugins require specific test cases:
+
+```typescript
+import { CustomSearchPlugin } from './CustomSearchPlugin';
+import { SearchInputManager } from '../utils/searchInputManager';
+import { ExecutionContext } from '../../../plugin/ExecutionContext';
+import { VimState } from '../../../state/VimState';
+import { CursorPosition } from '../../../state/CursorPosition';
+import { VIM_MODE } from '../../../state/VimMode';
+
+describe('CustomSearchPlugin', () => {
+  let plugin: CustomSearchPlugin;
+  let searchInputManager: SearchInputManager;
+  let state: VimState;
+  let context: ExecutionContext;
+
+  beforeEach(() => {
+    searchInputManager = new SearchInputManager();
+    plugin = new CustomSearchPlugin(searchInputManager);
+    state = new VimState('hello world\nhello universe');
+    context = new ExecutionContext(state);
+    context.setMode(VIM_MODE.NORMAL);
+  });
+
+  describe('Search Initiation', () => {
+    it('should start search input', () => {
+      plugin.performAction(context);
+
+      expect(searchInputManager.isActive()).toBe(true);
+      expect(context.getMode()).toBe(VIM_MODE.SEARCH_INPUT);
+    });
+
+    it('should set search direction', () => {
+      plugin.performAction(context);
+
+      const state = searchInputManager.getState();
+      expect(state.direction).toBe('forward');
+    });
+  });
+
+  describe('Search Navigation', () => {
+    it('should find next match', () => {
+      plugin.setSearchPattern('hello', 'forward');
+      state.cursor = new CursorPosition(0, 0);
+
+      plugin.performAction(context);
+
+      expect(context.getCursor().line).toBe(1);
+      expect(context.getCursor().column).toBe(0);
+    });
+
+    it('should handle no matches', () => {
+      plugin.setSearchPattern('nonexistent', 'forward');
+      state.cursor = new CursorPosition(0, 0);
+
+      plugin.performAction(context);
+
+      expect(context.getCursor().line).toBe(0);
+      expect(context.getCursor().column).toBe(0);
+    });
+  });
+
+  describe('Edge Cases', () => {
+    it('should handle empty buffer', () => {
+      const emptyState = new VimState('');
+      const emptyContext = new ExecutionContext(emptyState);
+      emptyContext.setMode(VIM_MODE.NORMAL);
+
+      plugin.setSearchPattern('test', 'forward');
+      plugin.performAction(emptyContext);
+
+      expect(emptyContext.getCursor().line).toBe(0);
+      expect(emptyContext.getCursor().column).toBe(0);
+    });
+
+    it('should handle invalid pattern', () => {
+      plugin.setSearchPattern('[invalid', 'forward');
+      state.cursor = new CursorPosition(0, 0);
+
+      plugin.performAction(context);
+
+      expect(context.getCursor().line).toBe(0);
+      expect(context.getCursor().column).toBe(0);
+    });
+  });
+});
+```
+
+### Guidelines for Extending Search Functionality
+
+1. **Use Shared State**: Always use a shared `SearchInputManager` for consistency
+
+2. **Handle Mode Transitions**: Properly manage transitions to/from SEARCH_INPUT mode
+
+3. **Validate Patterns**: Always validate search patterns before execution
+
+4. **Handle Edge Cases**: Handle empty buffers, no matches, and invalid patterns
+
+5. **Preserve Search State**: Maintain search pattern and direction across operations
+
+6. **Support Wrap Behavior**: Consider whether to wrap around the buffer
+
+7. **Respect Search Direction**: Always respect the search direction when navigating
+
+8. **Use Search Utilities**: Leverage existing search utilities for consistency
+
+### Examples of Extending Search Functionality
+
+#### Adding Case-Insensitive Search
+
+```typescript
+export class CaseInsensitiveSearchPlugin extends AbstractVimPlugin {
+  protected performAction(context: ExecutionContextType): void {
+    const pattern = this.lastPattern;
+    if (!pattern) return;
+
+    // Add 'i' flag for case-insensitive search
+    const regex = new RegExp(pattern, 'gi');
+
+    // Use regex for search
+    const matches = findAllMatches(buffer, regex, cursor.line, this.lastDirection);
+    // ... rest of implementation
+  }
+}
+```
+
+#### Adding Whole Word Search
+
+```typescript
+export class WholeWordSearchPlugin extends AbstractVimPlugin {
+  protected performAction(context: ExecutionContextType): void {
+    const pattern = this.lastPattern;
+    if (!pattern) return;
+
+    // Add word boundary anchors
+    const wholeWordPattern = `\\b${pattern}\\b`;
+    const regex = new RegExp(wholeWordPattern, 'g');
+
+    // Use regex for search
+    const matches = findAllMatches(buffer, regex, cursor.line, this.lastDirection);
+    // ... rest of implementation
+  }
+}
+```
+
+#### Adding Search with Count
+
+```typescript
+export class SearchWithCountPlugin extends AbstractVimPlugin {
+  protected performAction(context: ExecutionContextType): void {
+    const count = context.getCount() || 1;
+    let cursor = context.getCursor();
+
+    // Navigate count times
+    for (let i = 0; i < count; i++) {
+      const nextMatch = findNextMatch(matches, cursor, this.lastDirection, true);
+      if (!nextMatch) break;
+      cursor = nextMatch;
+    }
+
+    context.setCursor(cursor);
+  }
+}
+```
+
+---
+
 ## Additional Resources
 
 - [Vim Motion Documentation](vimdoc.sourceforge.net)
 - [Existing Plugin Source Code](src/plugins/movement/)
 - [Test Examples](tests/unit/plugins/movement/)
 - [Integration Tests](tests/integration/movement-integration.test.ts)
+- [Search Movement Documentation](./SEARCH_MOVEMENT.md)

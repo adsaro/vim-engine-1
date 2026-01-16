@@ -20,6 +20,18 @@ export * from './gg';
 // Bracket movement plugins
 export * from './percent';
 
+// Search movement plugins
+export * from './search-forward';
+export * from './search-backward';
+export * from './search-input';
+export * from './search-next';
+export * from './search-prev';
+export * from './search-word';
+
+// Search utilities
+export { SearchInputManager } from './utils/searchInputManager';
+export * from './utils/searchUtils';
+
 // Export w and w-capital with aliases to avoid naming conflicts
 export { WMovementPlugin as WordMovementPlugin } from './w';
 export { WMovementPlugin as CapitalWordMovementPlugin } from './w-capital';

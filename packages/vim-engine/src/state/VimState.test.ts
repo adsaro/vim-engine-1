@@ -401,4 +401,217 @@ describe('VimState', () => {
       expect(state.buffer.getContent()).toBe(content);
     });
   });
+
+  describe('Search State', () => {
+    describe('Properties', () => {
+      it('should initialize lastSearchPattern as null', () => {
+        const state = new VimState();
+        expect(state.lastSearchPattern).toBe(null);
+      });
+
+      it('should initialize lastSearchDirection as null', () => {
+        const state = new VimState();
+        expect(state.lastSearchDirection).toBe(null);
+      });
+
+      it('should initialize currentMatchPosition as null', () => {
+        const state = new VimState();
+        expect(state.currentMatchPosition).toBe(null);
+      });
+
+      it('should initialize searchMatches as empty array', () => {
+        const state = new VimState();
+        expect(state.searchMatches).toEqual([]);
+      });
+    });
+
+    describe('setLastSearch', () => {
+      it('should set lastSearchPattern', () => {
+        const state = new VimState();
+        state.setLastSearch('test', 'forward');
+        expect(state.lastSearchPattern).toBe('test');
+      });
+
+      it('should set lastSearchDirection to forward', () => {
+        const state = new VimState();
+        state.setLastSearch('test', 'forward');
+        expect(state.lastSearchDirection).toBe('forward');
+      });
+
+      it('should set lastSearchDirection to backward', () => {
+        const state = new VimState();
+        state.setLastSearch('test', 'backward');
+        expect(state.lastSearchDirection).toBe('backward');
+      });
+
+      it('should add pattern to search history', () => {
+        const state = new VimState();
+        state.setLastSearch('pattern', 'forward');
+        expect(state.searchHistory).toContain('pattern');
+        expect(state.searchHistory.length).toBe(1);
+      });
+
+      it('should update pattern and direction on subsequent calls', () => {
+        const state = new VimState();
+        state.setLastSearch('first', 'forward');
+        expect(state.lastSearchPattern).toBe('first');
+        expect(state.lastSearchDirection).toBe('forward');
+
+        state.setLastSearch('second', 'backward');
+        expect(state.lastSearchPattern).toBe('second');
+        expect(state.lastSearchDirection).toBe('backward');
+      });
+    });
+
+    describe('clearSearchState', () => {
+      it('should clear lastSearchPattern', () => {
+        const state = new VimState();
+        state.setLastSearch('test', 'forward');
+        state.clearSearchState();
+        expect(state.lastSearchPattern).toBe(null);
+      });
+
+      it('should clear lastSearchDirection', () => {
+        const state = new VimState();
+        state.setLastSearch('test', 'forward');
+        state.clearSearchState();
+        expect(state.lastSearchDirection).toBe(null);
+      });
+
+      it('should clear currentMatchPosition', () => {
+        const state = new VimState();
+        state.currentMatchPosition = new CursorPosition(5, 10);
+        state.clearSearchState();
+        expect(state.currentMatchPosition).toBe(null);
+      });
+
+      it('should clear searchMatches array', () => {
+        const state = new VimState();
+        state.searchMatches = [
+          new CursorPosition(0, 5),
+          new CursorPosition(1, 10),
+        ];
+        state.clearSearchState();
+        expect(state.searchMatches).toEqual([]);
+      });
+
+      it('should clear all search state at once', () => {
+        const state = new VimState();
+        state.setLastSearch('test', 'forward');
+        state.currentMatchPosition = new CursorPosition(3, 7);
+        state.searchMatches = [new CursorPosition(0, 0)];
+
+        state.clearSearchState();
+
+        expect(state.lastSearchPattern).toBe(null);
+        expect(state.lastSearchDirection).toBe(null);
+        expect(state.currentMatchPosition).toBe(null);
+        expect(state.searchMatches).toEqual([]);
+      });
+    });
+
+    describe('clone with search state', () => {
+      it('should copy lastSearchPattern', () => {
+        const state = new VimState();
+        state.setLastSearch('pattern', 'forward');
+        const cloned = state.clone();
+        expect(cloned.lastSearchPattern).toBe('pattern');
+      });
+
+      it('should copy lastSearchDirection', () => {
+        const state = new VimState();
+        state.setLastSearch('pattern', 'backward');
+        const cloned = state.clone();
+        expect(cloned.lastSearchDirection).toBe('backward');
+      });
+
+      it('should copy currentMatchPosition', () => {
+        const state = new VimState();
+        state.currentMatchPosition = new CursorPosition(5, 10);
+        const cloned = state.clone();
+        expect(cloned.currentMatchPosition).toBeInstanceOf(CursorPosition);
+        expect(cloned.currentMatchPosition?.line).toBe(5);
+        expect(cloned.currentMatchPosition?.column).toBe(10);
+      });
+
+      it('should copy searchMatches array', () => {
+        const state = new VimState();
+        state.searchMatches = [
+          new CursorPosition(0, 5),
+          new CursorPosition(1, 10),
+          new CursorPosition(2, 15),
+        ];
+        const cloned = state.clone();
+        expect(cloned.searchMatches.length).toBe(3);
+        expect(cloned.searchMatches[0]?.line).toBe(0);
+        expect(cloned.searchMatches[0]?.column).toBe(5);
+        expect(cloned.searchMatches[1]?.line).toBe(1);
+        expect(cloned.searchMatches[1]?.column).toBe(10);
+        expect(cloned.searchMatches[2]?.line).toBe(2);
+        expect(cloned.searchMatches[2]?.column).toBe(15);
+      });
+
+      it('should create independent copy of searchMatches', () => {
+        const state = new VimState();
+        state.searchMatches = [new CursorPosition(0, 5)];
+        const cloned = state.clone();
+        cloned.searchMatches.push(new CursorPosition(1, 10));
+        expect(state.searchMatches.length).toBe(1);
+        expect(cloned.searchMatches.length).toBe(2);
+      });
+
+      it('should create independent copy of currentMatchPosition', () => {
+        const state = new VimState();
+        state.currentMatchPosition = new CursorPosition(5, 10);
+        const cloned = state.clone();
+        cloned.currentMatchPosition = cloned.currentMatchPosition?.withLine(20) ?? null;
+        expect(state.currentMatchPosition?.line).toBe(5);
+        expect(cloned.currentMatchPosition?.line).toBe(20);
+      });
+    });
+
+    describe('reset with search state', () => {
+      it('should clear lastSearchPattern on reset', () => {
+        const state = new VimState();
+        state.setLastSearch('test', 'forward');
+        state.reset();
+        expect(state.lastSearchPattern).toBe(null);
+      });
+
+      it('should clear lastSearchDirection on reset', () => {
+        const state = new VimState();
+        state.setLastSearch('test', 'backward');
+        state.reset();
+        expect(state.lastSearchDirection).toBe(null);
+      });
+
+      it('should clear currentMatchPosition on reset', () => {
+        const state = new VimState();
+        state.currentMatchPosition = new CursorPosition(5, 10);
+        state.reset();
+        expect(state.currentMatchPosition).toBe(null);
+      });
+
+      it('should clear searchMatches on reset', () => {
+        const state = new VimState();
+        state.searchMatches = [new CursorPosition(0, 5), new CursorPosition(1, 10)];
+        state.reset();
+        expect(state.searchMatches).toEqual([]);
+      });
+
+      it('should clear all search state on reset', () => {
+        const state = new VimState();
+        state.setLastSearch('pattern', 'forward');
+        state.currentMatchPosition = new CursorPosition(3, 7);
+        state.searchMatches = [new CursorPosition(0, 0)];
+
+        state.reset();
+
+        expect(state.lastSearchPattern).toBe(null);
+        expect(state.lastSearchDirection).toBe(null);
+        expect(state.currentMatchPosition).toBe(null);
+        expect(state.searchMatches).toEqual([]);
+      });
+    });
+  });
 });

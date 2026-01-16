@@ -50,11 +50,12 @@ import { VimState } from '../state/VimState';
 import { TextBuffer } from '../state/TextBuffer';
 import { CursorPosition } from '../state/CursorPosition';
 import { VimMode } from '../state/VimMode';
+import { ExecutionContextType } from './VimPlugin';
 
 /**
  * ExecutionContext - Manages the execution environment for plugins
  */
-export class ExecutionContext {
+export class ExecutionContext implements ExecutionContextType {
   private state: VimState;
 
   /**
@@ -318,7 +319,7 @@ export class ExecutionContext {
   /**
    * Create a deep copy of this context
    *
-   * @returns {ExecutionContext} A new context with cloned state
+   * @returns {ExecutionContextType} A new context with cloned state
    *
    * @example
    * ```typescript
@@ -326,7 +327,7 @@ export class ExecutionContext {
    * // Modify context...
    * ```
    */
-  clone(): ExecutionContext {
+  clone(): ExecutionContextType {
     return new ExecutionContext(this.state.clone());
   }
 

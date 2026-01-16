@@ -50,7 +50,7 @@
  * @see AbstractVimPlugin For a base class implementation
  * @see PluginRegistry For plugin management
  */
-import { VimMode } from '../state';
+import { VimMode, CursorPosition, TextBuffer, VimState } from '../state';
 
 /**
  * ExecutionContext type for use in VimPlugin methods
@@ -63,13 +63,56 @@ export type ExecutionContextType = {
    * Get the current editor state
    * @returns The current state object
    */
-  getState(): unknown;
+  getState(): VimState;
+
+  /**
+   * Set a new state
+   * @param state - The new state to set
+   */
+  setState(state: VimState): void;
+
+  /**
+   * Get the current buffer
+   * @returns The current text buffer
+   */
+  getBuffer(): TextBuffer;
+
+  /**
+   * Set a new buffer
+   * @param buffer - The new text buffer
+   */
+  setBuffer(buffer: TextBuffer): void;
+
+  /**
+   * Get the current cursor position
+   * @returns The cursor position
+   */
+  getCursor(): CursorPosition;
+
+  /**
+   * Set a new cursor position
+   * @param position - The new cursor position
+   */
+  setCursor(position: CursorPosition): void;
+
+  /**
+   * Move cursor by delta
+   * @param deltaLine - Lines to move (positive = down, negative = up)
+   * @param deltaColumn - Columns to move (positive = right, negative = left)
+   */
+  moveCursor(deltaLine: number, deltaColumn: number): void;
 
   /**
    * Get the current vim mode
    * @returns The current mode
    */
   getMode(): VimMode;
+
+  /**
+   * Set the current mode
+   * @param mode - The mode to set
+   */
+  setMode(mode: VimMode): void;
 
   /**
    * Check if current mode matches a specific mode
@@ -79,10 +122,67 @@ export type ExecutionContextType = {
   isMode(mode: VimMode): boolean;
 
   /**
-   * Get the current cursor position
-   * @returns The cursor position
+   * Get register content
+   * @param name - The register name (a-z, *, etc.)
+   * @returns The register content or null if empty
    */
-  getCursor(): unknown;
+  getRegister(name: string): string | null;
+
+  /**
+   * Set register content
+   * @param name - The register name
+   * @param value - The content to store
+   */
+  setRegister(name: string, value: string): void;
+
+  /**
+   * Yank text to register
+   * @param name - The register name
+   * @param text - The text to yank
+   */
+  yankToRegister(name: string, text: string): void;
+
+  /**
+   * Get clipboard content
+   * @returns The clipboard content or empty string
+   */
+  getClipboard(): string;
+
+  /**
+   * Set clipboard content
+   * @param text - The text to set on clipboard
+   */
+  setClipboard(text: string): void;
+
+  /**
+   * Get the current line content
+   * @returns The content of the current line
+   */
+  getCurrentLine(): string;
+
+  /**
+   * Get the current line number
+   * @returns The current line index (0-based)
+   */
+  getLineNumber(): number;
+
+  /**
+   * Get the current count for command repetition
+   * @returns The current count (default 1 if not set)
+   */
+  getCount(): number;
+
+  /**
+   * Set the count for command repetition
+   * @param count - The count to set
+   */
+  setCount(count: number): void;
+
+  /**
+   * Create a deep copy of this context
+   * @returns A new context with cloned state
+   */
+  clone(): ExecutionContextType;
 };
 
 /**

@@ -103,6 +103,26 @@ export class VimState {
   commandHistory: string[];
 
   /**
+   * Last search pattern used
+   */
+  lastSearchPattern: string | null;
+
+  /**
+   * Direction of last search ('forward' or 'backward')
+   */
+  lastSearchDirection: 'forward' | 'backward' | null;
+
+  /**
+   * Current match position for n/N navigation
+   */
+  currentMatchPosition: CursorPosition | null;
+
+  /**
+   * All match positions for current search pattern
+   */
+  searchMatches: CursorPosition[];
+
+  /**
    * Create a new VimState
    *
    * @param initialContent - Initial text content (string or TextBuffer)
@@ -135,6 +155,10 @@ export class VimState {
     this.changeList = [];
     this.searchHistory = [];
     this.commandHistory = [];
+    this.lastSearchPattern = null;
+    this.lastSearchDirection = null;
+    this.currentMatchPosition = null;
+    this.searchMatches = [];
   }
 
   /**
@@ -316,6 +340,54 @@ export class VimState {
   }
 
   /**
+   * Set the last search pattern and direction
+   *
+   * Records the search pattern and direction, and adds the pattern to search history.
+   *
+   * @param pattern - The search pattern to record
+   * @param direction - The direction of the search ('forward' or 'backward')
+   * @returns {void}
+   *
+   * @example
+   * ```typescript
+   * state.setLastSearch('pattern', 'forward');
+   * expect(state.lastSearchPattern).toBe('pattern');
+   * expect(state.lastSearchDirection).toBe('forward');
+   * ```
+   */
+  setLastSearch(pattern: string, direction: 'forward' | 'backward'): void {
+    this.lastSearchPattern = pattern;
+    this.lastSearchDirection = direction;
+    this.pushSearch(pattern);
+  }
+
+  /**
+   * Clear all search state properties
+   *
+   * Resets the last search pattern, direction, current match position, and search matches.
+   *
+   * @returns {void}
+   *
+   * @example
+   * ```typescript
+   * state.setLastSearch('pattern', 'forward');
+   * state.currentMatchPosition = new CursorPosition(5, 10);
+   * state.searchMatches = [new CursorPosition(0, 0)];
+   * state.clearSearchState();
+   * expect(state.lastSearchPattern).toBe(null);
+   * expect(state.lastSearchDirection).toBe(null);
+   * expect(state.currentMatchPosition).toBe(null);
+   * expect(state.searchMatches).toEqual([]);
+   * ```
+   */
+  clearSearchState(): void {
+    this.lastSearchPattern = null;
+    this.lastSearchDirection = null;
+    this.currentMatchPosition = null;
+    this.searchMatches = [];
+  }
+
+  /**
    * Create a deep copy of this state
    *
    * @returns {VimState} A new state with copied content
@@ -349,6 +421,12 @@ export class VimState {
     cloned.searchHistory = [...this.searchHistory];
     cloned.commandHistory = [...this.commandHistory];
 
+    // Clone search state
+    cloned.lastSearchPattern = this.lastSearchPattern;
+    cloned.lastSearchDirection = this.lastSearchDirection;
+    cloned.currentMatchPosition = this.currentMatchPosition?.clone() ?? null;
+    cloned.searchMatches = this.searchMatches.map(pos => pos.clone());
+
     return cloned;
   }
 
@@ -375,5 +453,6 @@ export class VimState {
     this.changeList = [];
     this.searchHistory = [];
     this.commandHistory = [];
+    this.clearSearchState();
   }
 }

@@ -13,17 +13,19 @@ describe('VimMode', () => {
       expect(VIM_MODE.COMMAND).toBe('COMMAND');
       expect(VIM_MODE.REPLACE).toBe('REPLACE');
       expect(VIM_MODE.SELECT).toBe('SELECT');
+      expect(VIM_MODE.SEARCH_INPUT).toBe('SEARCH_INPUT');
     });
 
-    it('should have all six modes defined', () => {
+    it('should have all seven modes defined', () => {
       const modes = Object.values(VIM_MODE);
-      expect(modes).toHaveLength(6);
+      expect(modes).toHaveLength(7);
       expect(modes).toContain('NORMAL');
       expect(modes).toContain('INSERT');
       expect(modes).toContain('VISUAL');
       expect(modes).toContain('COMMAND');
       expect(modes).toContain('REPLACE');
       expect(modes).toContain('SELECT');
+      expect(modes).toContain('SEARCH_INPUT');
     });
   });
 
@@ -52,8 +54,12 @@ describe('VimMode', () => {
       expect(VIM_MODE.SELECT).toBe('SELECT');
     });
 
+    it('should have SEARCH_INPUT mode constant', () => {
+      expect(VIM_MODE.SEARCH_INPUT).toBe('SEARCH_INPUT');
+    });
+
     it('should have all modes in VIM_MODE constant object', () => {
-      const expectedModes = ['NORMAL', 'INSERT', 'VISUAL', 'COMMAND', 'REPLACE', 'SELECT'];
+      const expectedModes = ['NORMAL', 'INSERT', 'VISUAL', 'COMMAND', 'REPLACE', 'SELECT', 'SEARCH_INPUT'];
       const actualModes = Object.keys(VIM_MODE);
       expect(actualModes).toEqual(expectedModes);
     });
@@ -74,7 +80,7 @@ describe('VimMode', () => {
 
   describe('Mode Validation', () => {
     it('should correctly identify valid modes', () => {
-      const validModes: VimMode[] = ['NORMAL', 'INSERT', 'VISUAL', 'COMMAND', 'REPLACE', 'SELECT'];
+      const validModes: VimMode[] = ['NORMAL', 'INSERT', 'VISUAL', 'COMMAND', 'REPLACE', 'SELECT', 'SEARCH_INPUT'];
       validModes.forEach(mode => {
         expect(mode in VIM_MODE).toBe(true);
         expect(isValidVimMode(mode)).toBe(true);
@@ -96,6 +102,7 @@ describe('VimMode', () => {
       expect(isValidVimMode('COMMAND')).toBe(true);
       expect(isValidVimMode('REPLACE')).toBe(true);
       expect(isValidVimMode('SELECT')).toBe(true);
+      expect(isValidVimMode('SEARCH_INPUT')).toBe(true);
       expect(isValidVimMode('invalid')).toBe(false);
       expect(isValidVimMode('')).toBe(false);
     });
@@ -114,7 +121,7 @@ describe('VimMode', () => {
     it('should allow assigning any valid mode', () => {
       let currentMode: VimMode = 'NORMAL';
 
-      const modes: VimMode[] = ['INSERT', 'VISUAL', 'COMMAND', 'REPLACE', 'SELECT', 'NORMAL'];
+      const modes: VimMode[] = ['INSERT', 'VISUAL', 'COMMAND', 'REPLACE', 'SELECT', 'SEARCH_INPUT', 'NORMAL'];
 
       modes.forEach(mode => {
         currentMode = mode;
