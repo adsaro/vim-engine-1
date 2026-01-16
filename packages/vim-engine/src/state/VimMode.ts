@@ -34,8 +34,9 @@
  * - COMMAND: Mode for entering command-line commands (starting with :)
  * - REPLACE: Mode for overwriting text
  * - SELECT: Mode for selecting text (similar to VISUAL but with different behavior)
+ * - SEARCH: Mode for entering search patterns with /
  */
-export type VimMode = 'NORMAL' | 'INSERT' | 'VISUAL' | 'COMMAND' | 'REPLACE' | 'SELECT';
+export type VimMode = 'NORMAL' | 'INSERT' | 'VISUAL' | 'COMMAND' | 'REPLACE' | 'SELECT' | 'SEARCH';
 
 /**
  * Runtime constant object with all vim modes
@@ -79,6 +80,11 @@ export const VIM_MODE = {
    * Select mode - for selecting text
    */
   SELECT: 'SELECT' as VimMode,
+
+  /**
+   * Search mode - for entering search patterns with /
+   */
+  SEARCH: 'SEARCH' as VimMode,
 } as const;
 
 /**

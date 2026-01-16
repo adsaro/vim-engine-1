@@ -50,6 +50,13 @@ export function ModeIndicator({ mode, size = 'md' }: ModeIndicatorProps) {
           textColor: 'text-vim-select',
           borderColor: 'border-vim-select',
         };
+      case VIM_MODE.SEARCH:
+        return {
+          label: 'SEARCH',
+          color: 'bg-vim-search',
+          textColor: 'text-vim-search',
+          borderColor: 'border-vim-search',
+        };
       default:
         return {
           label: mode.toUpperCase(),
@@ -95,6 +102,8 @@ export function ModeBadge({ mode }: { mode: VimMode }) {
         return { label: 'R', color: 'bg-vim-replace' };
       case VIM_MODE.SELECT:
         return { label: 'S', color: 'bg-vim-select' };
+      case VIM_MODE.SEARCH:
+        return { label: '/', color: 'bg-vim-search' };
       default:
         return { label: '?', color: 'bg-gray-500' };
     }

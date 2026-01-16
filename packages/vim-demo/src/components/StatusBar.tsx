@@ -2,7 +2,7 @@ import { useVim } from '../contexts/VimContext';
 import { VIM_MODE } from '@vim-engine/core';
 
 export function StatusBar() {
-  const { vimState, content } = useVim();
+  const { vimState, content, searchPattern } = useVim();
 
   const lineCount = vimState.buffer.getLineCount();
   const currentLine = vimState.cursor.line + 1;
@@ -22,6 +22,8 @@ export function StatusBar() {
         return 'bg-vim-replace text-white';
       case VIM_MODE.SELECT:
         return 'bg-vim-select text-white';
+      case VIM_MODE.SEARCH:
+        return 'bg-vim-search text-white';
       default:
         return 'bg-gray-600 text-white';
     }
@@ -41,6 +43,8 @@ export function StatusBar() {
         return 'REPLACE';
       case VIM_MODE.SELECT:
         return 'SELECT';
+      case VIM_MODE.SEARCH:
+        return 'SEARCH';
       default:
         return vimState.mode.toUpperCase();
     }
@@ -51,6 +55,13 @@ export function StatusBar() {
       <div className="flex items-center space-x-4">
         {/* Mode indicator */}
         <span className={`px-2 py-0.5 rounded ${getModeColor()}`}>{getModeLabel()}</span>
+
+        {/* Search prompt */}
+        {vimState.mode === VIM_MODE.SEARCH && (
+          <span className="search-prompt ml-4 text-vim-search">
+            /{searchPattern}
+          </span>
+        )}
 
         {/* File info */}
         <span className="text-gray-400">

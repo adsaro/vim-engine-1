@@ -10,6 +10,7 @@ import {
   VimExecutor as VimEngine,
   VimState,
   VimMode,
+  VIM_MODE,
   HMovementPlugin,
   JMovementPlugin,
   KMovementPlugin,
@@ -28,17 +29,21 @@ import {
   GMovementPlugin,
   GGMovementPlugin,
   ExecutionContext,
+  SearchPlugin,
 } from '@vim-engine/core';
 
 interface VimContextType {
   vimEngine: VimEngine | null;
   vimState: VimState;
   content: string;
+  searchPattern: string;
   setContent: (content: string) => void;
   handleKeyDown: (event: React.KeyboardEvent) => void;
   handleKeystroke: (keystroke: string) => void;
   setMode: (mode: VimMode) => void;
   reset: () => void;
+  handleSearchChange: (value: string) => void;
+  handleSearchKeyDown: (event: React.KeyboardEvent) => void;
 }
 
 const VimContext = createContext<VimContextType | null>(null);
@@ -66,6 +71,7 @@ export function VimProvider({ children, initialContent = '' }: VimProviderProps)
     return state;
   });
   const [content, setContent] = useState(initialContent);
+  const [searchPattern, setSearchPattern] = useState('');
 
   // Initialize vim-engine
   useEffect(() => {
@@ -102,6 +108,9 @@ export function VimProvider({ children, initialContent = '' }: VimProviderProps)
     engine.registerPlugin(new GMovementPlugin());
     engine.registerPlugin(new GGMovementPlugin());
 
+    // Register search plugin
+    engine.registerPlugin(new SearchPlugin());
+
     engine.start();
 
     // Set the shared state
@@ -123,6 +132,7 @@ export function VimProvider({ children, initialContent = '' }: VimProviderProps)
     const clonedState = state.clone();
     setVimState(clonedState);
     setContent(clonedState.buffer.getContent());
+    setSearchPattern(clonedState.getCurrentSearchPattern());
   }, [vimEngine]);
 
   const handleKeystroke = useCallback(
@@ -147,6 +157,33 @@ export function VimProvider({ children, initialContent = '' }: VimProviderProps)
 
   const handleKeyDown = (event: React.KeyboardEvent) => {
     if (!vimEngine) return;
+
+    const currentMode = vimEngine.getCurrentMode();
+
+    // Handle search mode keys specially
+    if (currentMode === VIM_MODE.SEARCH) {
+      if (event.key === 'Enter') {
+        // Execute search
+        vimEngine.handleKeystroke('<Enter>');
+        updateState();
+      } else if (event.key === 'Escape') {
+        // Cancel search
+        vimEngine.cancelSearch();
+        updateState();
+      } else if (event.key === 'Backspace') {
+        // Remove last character
+        vimEngine.handleKeystroke('<BS>');
+        updateState();
+      } else if (event.key.length === 1 && !event.ctrlKey && !event.metaKey) {
+        // Add character to search pattern
+        vimEngine.addSearchCharacter(event.key);
+        updateState();
+      }
+      
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
 
     // Prevent default browser behavior for vim-like keybindings
     const ctrlKey = event.ctrlKey || event.metaKey;
@@ -214,15 +251,58 @@ export function VimProvider({ children, initialContent = '' }: VimProviderProps)
     updateState();
   }, [vimEngine, initialContent, updateState]);
 
+  // Handle search pattern changes from the search input
+  const handleSearchChange = useCallback(
+    (value: string) => {
+      if (!vimEngine) return;
+
+      // Update the search pattern in vim state
+      vimEngine.getState().setCurrentSearchPattern(value);
+      updateState();
+    },
+    [vimEngine, updateState]
+  );
+
+  // Handle key events in search mode
+  const handleSearchKeyDown = useCallback(
+    (event: React.KeyboardEvent) => {
+      if (!vimEngine) return;
+
+      if (event.key === 'Enter') {
+        // Execute search and return to normal mode
+        vimEngine.executeSearch();
+        vimEngine.exitSearchMode();
+        updateState();
+        event.preventDefault();
+        event.stopPropagation();
+      } else if (event.key === 'Escape') {
+        // Cancel search and return to normal mode
+        vimEngine.cancelSearch();
+        updateState();
+        event.preventDefault();
+        event.stopPropagation();
+      } else if (event.key === 'Backspace') {
+        // Remove last character from search pattern
+        vimEngine.removeSearchCharacter();
+        updateState();
+        // Don't prevent default - let the input handle the deletion
+      }
+    },
+    [vimEngine, updateState]
+  );
+
   const value: VimContextType = {
     vimEngine,
     vimState,
     content,
+    searchPattern,
     setContent,
     handleKeyDown,
     handleKeystroke,
     setMode,
     reset,
+    handleSearchChange,
+    handleSearchKeyDown,
   };
 
   return <VimContext.Provider value={value}>{children}</VimContext.Provider>;
