@@ -125,12 +125,20 @@ export class StarMovementPlugin extends AbstractVimPlugin {
       return;
     }
 
-    // Set the word as the last search pattern
-    vimState.setLastSearchPattern(word);
+    // Escape special regexp characters in the word
+    const escapedWord = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+    // Create a regexp pattern for whole-word matching
+    // Uses word boundaries \b to match only whole words
+    // \b matches at the position between a word character and a non-word character
+    const wholeWordPattern = `\\b${escapedWord}\\b`;
+
+    // Set the word as the last search pattern (as a regexp)
+    vimState.setLastSearchPattern(wholeWordPattern);
 
     // Find the next occurrence of the word
     // We search from current position + 1 to avoid matching the current word
-    const match = findNextMatch(buffer, word, cursor.line, cursor.column);
+    const match = findNextMatch(buffer, wholeWordPattern, cursor.line, cursor.column);
 
     // If a match was found, move the cursor to that position
     if (match) {
