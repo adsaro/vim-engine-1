@@ -30,6 +30,7 @@ import {
   GGMovementPlugin,
   ExecutionContext,
   SearchPlugin,
+  NMovementPlugin,
 } from '@vim-engine/core';
 
 interface VimContextType {
@@ -110,6 +111,8 @@ export function VimProvider({ children, initialContent = '' }: VimProviderProps)
 
     // Register search plugin
     engine.registerPlugin(new SearchPlugin());
+    // Register n movement plugin for navigating search results
+    engine.registerPlugin(new NMovementPlugin());
 
     engine.start();
 
