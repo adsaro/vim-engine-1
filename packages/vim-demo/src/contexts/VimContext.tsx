@@ -31,6 +31,7 @@ import {
   ExecutionContext,
   SearchPlugin,
   NMovementPlugin,
+  NCapitalMovementPlugin,
 } from '@vim-engine/core';
 
 interface VimContextType {
@@ -113,6 +114,8 @@ export function VimProvider({ children, initialContent = '' }: VimProviderProps)
     engine.registerPlugin(new SearchPlugin());
     // Register n movement plugin for navigating search results
     engine.registerPlugin(new NMovementPlugin());
+    // Register N (capital) movement plugin for navigating to previous search results
+    engine.registerPlugin(new NCapitalMovementPlugin());
 
     engine.start();
 

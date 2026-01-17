@@ -16,6 +16,7 @@ import {
   GGMovementPlugin,
   SearchPlugin,
   NMovementPlugin,
+  NCapitalMovementPlugin,
 } from '@vim-engine/core';
 
 interface UseVimEngineOptions {
@@ -75,6 +76,8 @@ export function useVimEngine(options: UseVimEngineOptions = {}): UseVimEngineRet
     engine.registerPlugin(new SearchPlugin());
     // Register n movement plugin for navigating search results
     engine.registerPlugin(new NMovementPlugin());
+    // Register N (capital) movement plugin for navigating to previous search results
+    engine.registerPlugin(new NCapitalMovementPlugin());
 
     engine.start();
     engineRef.current = engine;
