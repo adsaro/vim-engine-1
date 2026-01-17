@@ -90,6 +90,17 @@ export function Editor() {
     }
   }, []);
 
+  // Refocus textarea when exiting search mode
+  useEffect(() => {
+    if (vimState.mode === VIM_MODE.NORMAL && textareaRef.current) {
+      // Small delay to ensure the search overlay has been removed
+      const timer = setTimeout(() => {
+        textareaRef.current?.focus();
+      }, 50);
+      return () => clearTimeout(timer);
+    }
+  }, [vimState.mode]);
+
   // Determine cursor style based on mode
   const getCursorStyle = () => {
     const baseStyle: React.CSSProperties = {
