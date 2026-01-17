@@ -901,7 +901,7 @@ export class VimExecutor {
     // Search from current position to end of buffer
     for (let line = startLine; line < lineCount; line++) {
       const lineContent = buffer.getLine(line) || '';
-      const searchStartColumn = line === startColumn ? startColumn + 1 : 0;
+      const searchStartColumn = line === startLine ? startColumn + 1 : 0;
       const searchText = lineContent.slice(searchStartColumn);
 
       const matchIndex = searchText.indexOf(pattern);

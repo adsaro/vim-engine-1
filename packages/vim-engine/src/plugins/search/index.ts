@@ -20,4 +20,5 @@
 
 export { SearchPlugin } from './SearchPlugin';
 export { SearchState, type SearchResult } from './SearchState';
+export { NMovementPlugin } from './n';
 export * from './searchUtils';
