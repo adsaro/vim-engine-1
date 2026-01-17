@@ -11,6 +11,7 @@ export default {
           command: '#eab308', // yellow - command mode
           replace: '#ef4444', // red - replace mode
           select: '#f97316', // orange - select mode
+          search: '#f59e0b', // amber - search mode
         },
       },
     },

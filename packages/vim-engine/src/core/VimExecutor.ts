@@ -42,6 +42,8 @@ import { VimPlugin } from '../plugin/VimPlugin';
 import { PluginRegistry } from '../plugin/PluginRegistry';
 import { ExecutionContext } from '../plugin/ExecutionContext';
 import { VimMode, VimState } from '../state';
+import { CursorPosition } from '../state/CursorPosition';
+import { TextBuffer } from '../state/TextBuffer';
 import { CommandRouter } from './CommandRouter';
 import { DebounceManager } from './DebounceManager';
 import { ErrorHandler } from './ErrorHandler';
@@ -721,5 +723,202 @@ export class VimExecutor {
       errorCount: this.errorHandler.getErrorCount(),
       keystrokeCount: this.keystrokeCount,
     };
+  }
+
+  /**
+   * Start search mode - called when user presses /
+   *
+   * Transitions the editor to SEARCH mode and initializes the search pattern.
+   * The frontend will handle collecting keystrokes and relaying them to addSearchCharacter.
+   *
+   * @returns {void}
+   *
+   * @example
+   * ```typescript
+   * executor.startSearchMode();
+   * ```
+   */
+  startSearchMode(): void {
+    this.executionContext.setMode('SEARCH');
+    this.executionContext.getState().clearSearchPattern();
+  }
+
+  /**
+   * Add a character to the current search pattern
+   *
+   * Called by frontend for each character typed during search mode.
+   *
+   * @param char - The character to add to the search pattern
+   * @returns {void}
+   *
+   * @example
+   * ```typescript
+   * executor.addSearchCharacter('h');
+   * executor.addSearchCharacter('e');
+   * ```
+   */
+  addSearchCharacter(char: string): void {
+    const currentPattern = this.executionContext.getState().getCurrentSearchPattern();
+    this.executionContext.getState().setCurrentSearchPattern(currentPattern + char);
+  }
+
+  /**
+   * Remove the last character from the search pattern
+   *
+   * Called when user presses Backspace during search mode.
+   *
+   * @returns {void}
+   *
+   * @example
+   * ```typescript
+   * executor.removeSearchCharacter();
+   * ```
+   */
+  removeSearchCharacter(): void {
+    const currentPattern = this.executionContext.getState().getCurrentSearchPattern();
+    if (currentPattern.length > 0) {
+      this.executionContext.getState().setCurrentSearchPattern(currentPattern.slice(0, -1));
+    }
+  }
+
+  /**
+   * Execute the search with the current pattern
+   *
+   * Searches for the pattern in the buffer starting from the current cursor position.
+   * If found, moves cursor to the match. If not found, returns an error.
+   *
+   * @returns {Object} Search result
+   *   - success: boolean - Whether the search found a match
+   *   - line: number - Line of match (if success)
+   *   - column: number - Column of match (if success)
+   *   - error: string - Error message (if not success)
+   *
+   * @example
+   * ```typescript
+   * const result = executor.executeSearch();
+   * if (result.success) {
+   *   console.log(`Found at line ${result.line}, column ${result.column}`);
+   * } else {
+   *   console.error(result.error);
+   * }
+   * ```
+   */
+  executeSearch(): { success: boolean; line: number; column: number; error?: string } {
+    const state = this.executionContext.getState();
+    const pattern = state.getCurrentSearchPattern();
+    const buffer = state.buffer;
+    const cursor = state.cursor;
+
+    // Search from current position (line, column + 1 to avoid current match)
+    const match = this.findNextMatch(buffer, pattern, cursor.line, cursor.column);
+
+    if (match) {
+      // Save the pattern for future n/N commands
+      state.setLastSearchPattern(pattern);
+      state.addJump(cursor.clone());
+      state.cursor = new CursorPosition(match.line, match.column);
+      return { success: true, line: match.line, column: match.column };
+    }
+
+    // No match found
+    return {
+      success: false,
+      line: -1,
+      column: -1,
+      error: `Pattern not found: ${pattern}`,
+    };
+  }
+
+  /**
+   * Exit search mode and return to normal mode
+   *
+   * Called after successful search execution.
+   *
+   * @returns {void}
+   *
+   * @example
+   * ```typescript
+   * executor.exitSearchMode();
+   * ```
+   */
+  exitSearchMode(): void {
+    this.executionContext.setMode('NORMAL');
+    this.executionContext.getState().clearSearchPattern();
+  }
+
+  /**
+   * Get the current search pattern
+   *
+   * @returns {string} The current search pattern being built
+   *
+   * @example
+   * ```typescript
+   * const pattern = executor.getCurrentSearchPattern();
+   * ```
+   */
+  getCurrentSearchPattern(): string {
+    return this.executionContext.getState().getCurrentSearchPattern();
+  }
+
+  /**
+   * Cancel search and return to normal mode without executing
+   *
+   * Called when user presses Escape during search mode.
+   *
+   * @returns {void}
+   *
+   * @example
+   * ```typescript
+   * executor.cancelSearch();
+   * ```
+   */
+  cancelSearch(): void {
+    this.executionContext.setMode('NORMAL');
+    this.executionContext.getState().clearSearchPattern();
+  }
+
+  /**
+   * Find next occurrence of pattern in buffer
+   *
+   * @param buffer - The text buffer to search
+   * @param pattern - The search pattern
+   * @param startLine - Line to start searching from
+   * @param startColumn - Column to start searching from
+   * @returns Position of match or null if not found
+   * @private
+   */
+  private findNextMatch(
+    buffer: TextBuffer,
+    pattern: string,
+    startLine: number,
+    startColumn: number,
+  ): { line: number; column: number } | null {
+    if (!pattern) return null;
+
+    const lineCount = buffer.getLineCount();
+    if (lineCount === 0) return null;
+
+    // Search from current position to end of buffer
+    for (let line = startLine; line < lineCount; line++) {
+      const lineContent = buffer.getLine(line) || '';
+      const searchStartColumn = line === startLine ? startColumn + 1 : 0;
+      const searchText = lineContent.slice(searchStartColumn);
+
+      const matchIndex = searchText.indexOf(pattern);
+      if (matchIndex !== -1) {
+        return { line, column: searchStartColumn + matchIndex };
+      }
+    }
+
+    // Wrap around to beginning of buffer
+    for (let line = 0; line < startLine; line++) {
+      const lineContent = buffer.getLine(line) || '';
+      const matchIndex = lineContent.indexOf(pattern);
+      if (matchIndex !== -1) {
+        return { line, column: matchIndex };
+      }
+    }
+
+    return null;
   }
 }

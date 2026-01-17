@@ -14,6 +14,10 @@ import {
   GUnderscoreMovementPlugin,
   GMovementPlugin,
   GGMovementPlugin,
+  SearchPlugin,
+  NMovementPlugin,
+  NCapitalMovementPlugin,
+  StarMovementPlugin,
 } from '@vim-engine/core';
 
 interface UseVimEngineOptions {
@@ -68,6 +72,15 @@ export function useVimEngine(options: UseVimEngineOptions = {}): UseVimEngineRet
     // Document navigation plugins
     engine.registerPlugin(new GMovementPlugin());
     engine.registerPlugin(new GGMovementPlugin());
+
+    // Register search plugin
+    engine.registerPlugin(new SearchPlugin());
+    // Register n movement plugin for navigating search results
+    engine.registerPlugin(new NMovementPlugin());
+    // Register N (capital) movement plugin for navigating to previous search results
+    engine.registerPlugin(new NCapitalMovementPlugin());
+    // Register * movement plugin for searching word under cursor
+    engine.registerPlugin(new StarMovementPlugin());
 
     engine.start();
     engineRef.current = engine;
