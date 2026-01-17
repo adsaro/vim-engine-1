@@ -3,11 +3,11 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { StarMovementPlugin } from '../../plugins/search';
-import { VimState } from '../../state/VimState';
-import { CursorPosition } from '../../state/CursorPosition';
-import { TextBuffer } from '../../state/TextBuffer';
-import { ExecutionContext } from '../../plugin/ExecutionContext';
+import { StarMovementPlugin } from './StarMovementPlugin';
+import { VimState } from '../../../state/VimState';
+import { CursorPosition } from '../../../state/CursorPosition';
+import { TextBuffer } from '../../../state/TextBuffer';
+import { ExecutionContext } from '../../../plugin/ExecutionContext';
 
 describe('StarMovementPlugin', () => {
   it('should search for the word under cursor', () => {
@@ -20,8 +20,7 @@ describe('StarMovementPlugin', () => {
     state.buffer.setContent(content);
 
     // Move cursor to first 'hello' (position 0,0)
-    state.cursor.line = 0;
-    state.cursor.column = 0;
+    state.cursor = new CursorPosition(0, 0);
 
     // Create execution context
     const context = {
@@ -29,8 +28,7 @@ describe('StarMovementPlugin', () => {
       getBuffer: () => state.buffer,
       getCursor: () => state.cursor,
       setCursor: (pos: CursorPosition) => {
-        state.cursor.line = pos.line;
-        state.cursor.column = pos.column;
+        state.cursor = pos;
       },
       setMode: () => {},
     } as ExecutionContext;
@@ -42,8 +40,10 @@ describe('StarMovementPlugin', () => {
     expect(state.cursor.column).toBe(12);
     expect(state.cursor.line).toBe(0);
 
-    // Should have set the search pattern
-    expect(state.getLastSearchPattern()).toBe('hello');
+    // Should have set the search pattern as a regexp for whole-word matching
+    const pattern = state.getLastSearchPattern();
+    expect(pattern).toContain('hello');
+    expect(pattern).toContain('\\b'); // Should contain word boundary
   });
 
   it('should not move if cursor is not on a word', () => {
@@ -53,8 +53,7 @@ describe('StarMovementPlugin', () => {
 
     const content = 'hello world';
     state.buffer.setContent(content);
-    state.cursor.line = 0;
-    state.cursor.column = 5; // Position on space
+    state.cursor = new CursorPosition(0, 5); // Position on space
 
     const originalColumn = state.cursor.column;
 
@@ -62,7 +61,9 @@ describe('StarMovementPlugin', () => {
       getState: () => state,
       getBuffer: () => state.buffer,
       getCursor: () => state.cursor,
-      setCursor: () => {},
+      setCursor: (pos: CursorPosition) => {
+        state.cursor = pos;
+      },
       setMode: () => {},
     } as ExecutionContext;
 
@@ -79,16 +80,14 @@ describe('StarMovementPlugin', () => {
 
     const content = 'test_variable hello test_variable';
     state.buffer.setContent(content);
-    state.cursor.line = 0;
-    state.cursor.column = 5; // Position in middle of 'test_variable'
+    state.cursor = new CursorPosition(0, 5); // Position in middle of 'test_variable'
 
     const context = {
       getState: () => state,
       getBuffer: () => state.buffer,
       getCursor: () => state.cursor,
       setCursor: (pos: CursorPosition) => {
-        state.cursor.line = pos.line;
-        state.cursor.column = pos.column;
+        state.cursor = pos;
       },
       setMode: () => {},
     } as ExecutionContext;
@@ -96,10 +95,12 @@ describe('StarMovementPlugin', () => {
     plugin.performAction(context);
 
     // Should search for the complete word including underscore
-    expect(state.getLastSearchPattern()).toBe('test_variable');
+    const pattern = state.getLastSearchPattern();
+    expect(pattern).toContain('test_variable');
+    expect(pattern).toContain('\\b'); // Should contain word boundary for whole-word matching
 
     // Should have moved to the second occurrence
-    expect(state.cursor.column).toBe(19);
+    expect(state.cursor.column).toBe(20);
   });
 
   it('should wrap around to find next occurrence', () => {
@@ -109,16 +110,14 @@ describe('StarMovementPlugin', () => {
 
     const content = 'hello world';
     state.buffer.setContent(content);
-    state.cursor.line = 0;
-    state.cursor.column = 0; // On the first and only 'hello'
+    state.cursor = new CursorPosition(0, 0); // On the first and only 'hello'
 
     const context = {
       getState: () => state,
       getBuffer: () => state.buffer,
       getCursor: () => state.cursor,
       setCursor: (pos: CursorPosition) => {
-        state.cursor.line = pos.line;
-        state.cursor.column = pos.column;
+        state.cursor = pos;
       },
       setMode: () => {},
     } as ExecutionContext;
@@ -136,16 +135,14 @@ describe('StarMovementPlugin', () => {
 
     const content = 'hello world hello';
     state.buffer.setContent(content);
-    state.cursor.line = 0;
-    state.cursor.column = 12; // On last 'hello'
+    state.cursor = new CursorPosition(0, 12); // On last 'hello'
 
     const context = {
       getState: () => state,
       getBuffer: () => state.buffer,
       getCursor: () => state.cursor,
       setCursor: (pos: CursorPosition) => {
-        state.cursor.line = pos.line;
-        state.cursor.column = pos.column;
+        state.cursor = pos;
       },
       setMode: () => {},
     } as ExecutionContext;
@@ -154,6 +151,59 @@ describe('StarMovementPlugin', () => {
 
     // Should wrap to first 'hello'
     expect(state.cursor.column).toBe(0);
-    expect(state.getLastSearchPattern()).toBe('hello');
+    expect(state.getLastSearchPattern()).toContain('hello');
+  });
+
+  it('should match whole words only', () => {
+    const state = new VimState();
+    state.buffer = new TextBuffer();
+    const plugin = new StarMovementPlugin();
+
+    // Set up content where 'hello' appears as part of other words
+    const content = 'hello hello_world helloworld hello';
+    state.buffer.setContent(content);
+    state.cursor = new CursorPosition(0, 0); // On first 'hello'
+
+    const context = {
+      getState: () => state,
+      getBuffer: () => state.buffer,
+      getCursor: () => state.cursor,
+      setCursor: (pos: CursorPosition) => {
+        state.cursor = pos;
+      },
+      setMode: () => {},
+    } as ExecutionContext;
+
+    plugin.performAction(context);
+
+    // Should skip 'hello_world' and 'helloworld' and match only standalone 'hello'
+    // hello (0-4) + space (5) + hello_world (6-16) + space (17) + helloworld (18-27) + space (28) + hello (29-33)
+    expect(state.cursor.column).toBe(29);
+  });
+
+  it('should match whole words at beginning and end of line', () => {
+    const state = new VimState();
+    state.buffer = new TextBuffer();
+    const plugin = new StarMovementPlugin();
+
+    // Word at beginning of line
+    const content = 'hello world';
+    state.buffer.setContent(content);
+    state.cursor = new CursorPosition(0, 0);
+
+    const context = {
+      getState: () => state,
+      getBuffer: () => state.buffer,
+      getCursor: () => state.cursor,
+      setCursor: (pos: CursorPosition) => {
+        state.cursor = pos;
+      },
+      setMode: () => {},
+    } as ExecutionContext;
+
+    plugin.performAction(context);
+
+    // Should wrap around and find the same 'hello' at the beginning
+    expect(state.cursor.column).toBe(0);
   });
 });
