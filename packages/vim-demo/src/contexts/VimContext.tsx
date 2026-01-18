@@ -169,28 +169,9 @@ export function VimProvider({ children, initialContent = '' }: VimProviderProps)
 
     const currentMode = vimEngine.getCurrentMode();
 
-    // Handle search mode keys specially
+    // Don't handle search mode keys here - they're handled by handleSearchKeyDown
     if (currentMode === VIM_MODE.SEARCH) {
-      if (event.key === 'Enter') {
-        // Execute search
-        vimEngine.handleKeystroke('<Enter>');
-        updateState();
-      } else if (event.key === 'Escape') {
-        // Cancel search
-        vimEngine.cancelSearch();
-        updateState();
-      } else if (event.key === 'Backspace') {
-        // Remove last character
-        vimEngine.handleKeystroke('<BS>');
-        updateState();
-      } else if (event.key.length === 1 && !event.ctrlKey && !event.metaKey) {
-        // Add character to search pattern
-        vimEngine.addSearchCharacter(event.key);
-        updateState();
-      }
-      
-      event.preventDefault();
-      event.stopPropagation();
+      // Let the search input handle its own key events
       return;
     }
 
@@ -294,7 +275,8 @@ export function VimProvider({ children, initialContent = '' }: VimProviderProps)
         // Remove last character from search pattern
         vimEngine.removeSearchCharacter();
         updateState();
-        // Don't prevent default - let the input handle the deletion
+        event.preventDefault();
+        event.stopPropagation();
       }
     },
     [vimEngine, updateState]
