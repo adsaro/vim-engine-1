@@ -33,6 +33,8 @@ import {
   NMovementPlugin,
   NCapitalMovementPlugin,
   StarMovementPlugin,
+  FForwardMovementPlugin,
+  FBackwardMovementPlugin,
 } from '@vim-engine/core';
 
 interface VimContextType {
@@ -119,6 +121,10 @@ export function VimProvider({ children, initialContent = '' }: VimProviderProps)
     engine.registerPlugin(new NCapitalMovementPlugin());
     // Register * movement plugin for searching word under cursor
     engine.registerPlugin(new StarMovementPlugin());
+
+    // Register character search plugins
+    engine.registerPlugin(new FForwardMovementPlugin());
+    engine.registerPlugin(new FBackwardMovementPlugin());
 
     engine.start();
 
