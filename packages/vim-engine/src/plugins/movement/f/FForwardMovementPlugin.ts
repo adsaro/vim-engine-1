@@ -106,7 +106,7 @@ export class FForwardMovementPlugin extends AbstractVimPlugin {
           // Found the nth occurrence - move cursor to it
           executionContext.setCursor(new CursorPosition(cursor.line, i));
           // Store for repetition with ; and ,
-          state.setLastCharSearch({ char, direction: 'forward' });
+          state.setLastCharSearch({ char, direction: 'forward', type: 'find' });
           return;
         }
       }
@@ -114,6 +114,6 @@ export class FForwardMovementPlugin extends AbstractVimPlugin {
 
     // Character not found - cursor stays in place
     // Still store the search for potential repetition
-    state.setLastCharSearch({ char, direction: 'forward' });
+    state.setLastCharSearch({ char, direction: 'forward', type: 'find' });
   }
 }

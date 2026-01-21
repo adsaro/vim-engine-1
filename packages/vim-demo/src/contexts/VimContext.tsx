@@ -37,6 +37,8 @@ import {
   FBackwardMovementPlugin,
   TForwardMovementPlugin,
   TBackwardMovementPlugin,
+  SemicolonMovementPlugin,
+  CommaMovementPlugin,
 } from '@vim-engine/core';
 
 interface VimContextType {
@@ -129,6 +131,9 @@ export function VimProvider({ children, initialContent = '' }: VimProviderProps)
     engine.registerPlugin(new FBackwardMovementPlugin());
     engine.registerPlugin(new TForwardMovementPlugin());
     engine.registerPlugin(new TBackwardMovementPlugin());
+    // Register repeat plugins
+    engine.registerPlugin(new SemicolonMovementPlugin());
+    engine.registerPlugin(new CommaMovementPlugin());
 
     engine.start();
 

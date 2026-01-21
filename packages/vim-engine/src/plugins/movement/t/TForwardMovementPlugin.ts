@@ -106,7 +106,7 @@ export class TForwardMovementPlugin extends AbstractVimPlugin {
           // Found the nth occurrence - move cursor to just before it
           executionContext.setCursor(new CursorPosition(cursor.line, i - 1));
           // Store for repetition with ; and ,
-          state.setLastCharSearch({ char, direction: 'forward' });
+          state.setLastCharSearch({ char, direction: 'forward', type: 'till' });
           return;
         }
       }
@@ -114,6 +114,6 @@ export class TForwardMovementPlugin extends AbstractVimPlugin {
 
     // Character not found - cursor stays in place
     // Still store the search for potential repetition
-    state.setLastCharSearch({ char, direction: 'forward' });
+    state.setLastCharSearch({ char, direction: 'forward', type: 'till' });
   }
 }
