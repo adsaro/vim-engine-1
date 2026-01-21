@@ -113,11 +113,12 @@ export class VimState {
   private _lastSearchPattern: string = '';
 
   /**
-   * Last character search (for f/F/;/, commands)
+   * Last character search (for f/F/t/T/;/, commands)
    */
   private _lastCharSearch: {
     char: string;
     direction: 'forward' | 'backward';
+    type: 'find' | 'till';
   } | null = null;
 
   /**
@@ -485,7 +486,7 @@ export class VimState {
    * const lastSearch = state.getLastCharSearch();
    * ```
    */
-  getLastCharSearch(): { char: string; direction: 'forward' | 'backward' } | null {
+  getLastCharSearch(): { char: string; direction: 'forward' | 'backward'; type: 'find' | 'till' } | null {
     return this._lastCharSearch;
   }
 
@@ -496,10 +497,10 @@ export class VimState {
    *
    * @example
    * ```typescript
-   * state.setLastCharSearch({ char: 'a', direction: 'forward' });
+   * state.setLastCharSearch({ char: 'a', direction: 'forward', type: 'find' });
    * ```
    */
-  setLastCharSearch(charSearch: { char: string; direction: 'forward' | 'backward' } | null): void {
+  setLastCharSearch(charSearch: { char: string; direction: 'forward' | 'backward'; type: 'find' | 'till' } | null): void {
     this._lastCharSearch = charSearch;
   }
 }

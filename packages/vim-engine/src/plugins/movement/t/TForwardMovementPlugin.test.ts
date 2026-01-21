@@ -139,7 +139,7 @@ describe('TForwardMovementPlugin', () => {
       plugin.execute(context);
 
       const lastSearch = state.getLastCharSearch();
-      expect(lastSearch).toEqual({ char: 'o', direction: 'forward' });
+      expect(lastSearch).toEqual({ char: 'o', direction: 'forward', type: 'till' });
     });
 
     it('should store search even when not found', () => {

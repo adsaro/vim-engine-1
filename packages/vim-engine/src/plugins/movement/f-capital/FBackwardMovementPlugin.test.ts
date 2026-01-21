@@ -137,7 +137,7 @@ describe('FBackwardMovementPlugin', () => {
       plugin.execute(context);
 
       const lastSearch = state.getLastCharSearch();
-      expect(lastSearch).toEqual({ char: 'o', direction: 'backward' });
+      expect(lastSearch).toEqual({ char: 'o', direction: 'backward', type: 'find' });
     });
 
     it('should store search even when not found', () => {
