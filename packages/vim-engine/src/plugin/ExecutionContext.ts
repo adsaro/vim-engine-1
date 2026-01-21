@@ -56,6 +56,7 @@ import { VimMode } from '../state/VimMode';
  */
 export class ExecutionContext {
   private state: VimState;
+  private currentPattern: string = '';
 
   /**
    * Create an execution context with optional initial state
@@ -74,6 +75,35 @@ export class ExecutionContext {
    */
   constructor(state?: VimState) {
     this.state = state || new VimState();
+  }
+
+  /**
+   * Set the current keystroke pattern being executed
+   *
+   * @param pattern - The keystroke pattern (e.g., 'fa', '3G', 'dd')
+   *
+   * @example
+   * ```typescript
+   * context.setCurrentPattern('fa');
+   * ```
+   */
+  setCurrentPattern(pattern: string): void {
+    this.currentPattern = pattern;
+  }
+
+  /**
+   * Get the current keystroke pattern being executed
+   *
+   * @returns {string} The current pattern
+   *
+   * @example
+   * ```typescript
+   * const pattern = context.getCurrentPattern();
+   * console.log('Executing:', pattern);
+   * ```
+   */
+  getCurrentPattern(): string {
+    return this.currentPattern;
   }
 
   /**

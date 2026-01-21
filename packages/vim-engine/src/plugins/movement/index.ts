@@ -20,6 +20,14 @@ export * from './gg';
 // Bracket movement plugins
 export * from './percent';
 
+// Character search plugins
+export * from './f';
+export * from './f-capital';
+export * from './t';
+export * from './t-capital';
+export * from './semicolon';
+export * from './comma';
+
 // Export w and w-capital with aliases to avoid naming conflicts
 export { WMovementPlugin as WordMovementPlugin } from './w';
 export { WMovementPlugin as CapitalWordMovementPlugin } from './w-capital';

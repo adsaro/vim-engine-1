@@ -113,6 +113,15 @@ export class VimState {
   private _lastSearchPattern: string = '';
 
   /**
+   * Last character search (for f/F/t/T/;/, commands)
+   */
+  private _lastCharSearch: {
+    char: string;
+    direction: 'forward' | 'backward';
+    type: 'find' | 'till';
+  } | null = null;
+
+  /**
    * Create a new VimState
    *
    * @param initialContent - Initial text content (string or TextBuffer)
@@ -432,6 +441,7 @@ export class VimState {
     // Clone search patterns
     cloned._currentSearchPattern = this._currentSearchPattern;
     cloned._lastSearchPattern = this._lastSearchPattern;
+    cloned._lastCharSearch = this._lastCharSearch ? { ...this._lastCharSearch } : null;
 
     return cloned;
   }
@@ -463,5 +473,34 @@ export class VimState {
     // Clear search patterns
     this._currentSearchPattern = '';
     this._lastSearchPattern = '';
+    this._lastCharSearch = null;
+  }
+
+  /**
+   * Get the last character search
+   *
+   * @returns {Last character search or null}
+   *
+   * @example
+   * ```typescript
+   * const lastSearch = state.getLastCharSearch();
+   * ```
+   */
+  getLastCharSearch(): { char: string; direction: 'forward' | 'backward'; type: 'find' | 'till' } | null {
+    return this._lastCharSearch;
+  }
+
+  /**
+   * Set the last character search
+   *
+   * @param charSearch - The character search to store
+   *
+   * @example
+   * ```typescript
+   * state.setLastCharSearch({ char: 'a', direction: 'forward', type: 'find' });
+   * ```
+   */
+  setLastCharSearch(charSearch: { char: string; direction: 'forward' | 'backward'; type: 'find' | 'till' } | null): void {
+    this._lastCharSearch = charSearch;
   }
 }
