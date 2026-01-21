@@ -534,6 +534,8 @@ export class VimExecutor {
    * @returns {void}
    */
   private executeCommand(command: string): void {
+    // Set the current pattern in the execution context before executing
+    this.executionContext.setCurrentPattern(command);
     this.commandRouter.executeSync(command, this.executionContext);
     this.keystrokeCount++;
     this.executionContext.setCount(0);
