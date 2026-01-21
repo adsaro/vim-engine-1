@@ -35,6 +35,8 @@ import {
   StarMovementPlugin,
   FForwardMovementPlugin,
   FBackwardMovementPlugin,
+  TForwardMovementPlugin,
+  TBackwardMovementPlugin,
 } from '@vim-engine/core';
 
 interface VimContextType {
@@ -125,6 +127,8 @@ export function VimProvider({ children, initialContent = '' }: VimProviderProps)
     // Register character search plugins
     engine.registerPlugin(new FForwardMovementPlugin());
     engine.registerPlugin(new FBackwardMovementPlugin());
+    engine.registerPlugin(new TForwardMovementPlugin());
+    engine.registerPlugin(new TBackwardMovementPlugin());
 
     engine.start();
 

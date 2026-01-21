@@ -23,6 +23,8 @@ export * from './percent';
 // Character search plugins
 export * from './f';
 export * from './f-capital';
+export * from './t';
+export * from './t-capital';
 
 // Export w and w-capital with aliases to avoid naming conflicts
 export { WMovementPlugin as WordMovementPlugin } from './w';
