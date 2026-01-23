@@ -17,6 +17,7 @@ import {
   SearchPlugin,
   NMovementPlugin,
   NCapitalMovementPlugin,
+  HashMovementPlugin,
   StarMovementPlugin,
 } from '@vim-engine/core';
 
@@ -80,6 +81,7 @@ export function useVimEngine(options: UseVimEngineOptions = {}): UseVimEngineRet
     // Register N (capital) movement plugin for navigating to previous search results
     engine.registerPlugin(new NCapitalMovementPlugin());
     // Register * movement plugin for searching word under cursor
+    engine.registerPlugin(new HashMovementPlugin());
     engine.registerPlugin(new StarMovementPlugin());
 
     engine.start();

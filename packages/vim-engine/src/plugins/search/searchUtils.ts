@@ -180,13 +180,23 @@ export function findPreviousMatch(
   }
 
   // Wrap around to end of buffer
-  for (let line = lineCount - 1; line > startLine; line--) {
+  for (let line = lineCount - 1; line >= startLine; line--) {
     const lineContent = buffer.getLine(line) || '';
-    const allMatches = findAllMatches(lineContent);
+    
+    // For the startLine, only search from startColumn to end (not including already searched range)
+    let searchText: string;
+    if (line === startLine) {
+      searchText = lineContent.slice(startColumn);
+    } else {
+      searchText = lineContent;
+    }
+    
+    const allMatches = findAllMatches(searchText);
     if (allMatches.length > 0) {
-      // Get the last match (rightmost) in the line
+      // Get the last match (rightmost) in the search range
       const matchIndex = allMatches[allMatches.length - 1];
-      return { line, column: matchIndex };
+      const columnOffset = line === startLine ? startColumn : 0;
+      return { line, column: columnOffset + matchIndex };
     }
   }
 
