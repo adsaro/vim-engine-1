@@ -113,6 +113,11 @@ export class VimState {
   private _lastSearchPattern: string = '';
 
   /**
+   * Search direction: true for forward (/), false for backward (?)
+   */
+  private _searchForward: boolean = true;
+
+  /**
    * Last character search (for f/F/t/T/;/, commands)
    */
   private _lastCharSearch: {
@@ -405,6 +410,37 @@ export class VimState {
   }
 
   /**
+   * Check if the last search was forward
+   *
+   * @returns {boolean} True if forward search (/), false if backward (?)
+   *
+   * @example
+   * ```typescript
+   * if (state.isSearchForward()) {
+   *   // Search forward
+   * }
+   * ```
+   */
+  isSearchForward(): boolean {
+    return this._searchForward;
+  }
+
+  /**
+   * Set the search direction
+   *
+   * @param forward - True for forward search (/), false for backward (?)
+   *
+   * @example
+   * ```typescript
+   * state.setSearchForward(true);  // Forward
+   * state.setSearchForward(false); // Backward
+   * ```
+   */
+  setSearchForward(forward: boolean): void {
+    this._searchForward = forward;
+  }
+
+  /**
    * Create a deep copy of this state
    *
    * @returns {VimState} A new state with copied content
@@ -441,6 +477,7 @@ export class VimState {
     // Clone search patterns
     cloned._currentSearchPattern = this._currentSearchPattern;
     cloned._lastSearchPattern = this._lastSearchPattern;
+    cloned._searchForward = this._searchForward;
     cloned._lastCharSearch = this._lastCharSearch ? { ...this._lastCharSearch } : null;
 
     return cloned;
@@ -473,6 +510,7 @@ export class VimState {
     // Clear search patterns
     this._currentSearchPattern = '';
     this._lastSearchPattern = '';
+    this._searchForward = true;
     this._lastCharSearch = null;
   }
 

@@ -93,40 +93,24 @@ export class SearchPlugin extends AbstractVimPlugin {
    *
    * When "/" or "?" is pressed, this plugin:
    * 1. Sets the search direction based on the keystroke
-   * 2. Transitions the editor to SEARCH mode
-   * 3. Clears any previous search pattern
+   * 2. Stores the search direction in the state for use during search execution
+   * 3. Transitions the editor to SEARCH mode
+   * 4. Clears any previous search pattern
    *
    * @param context - The execution context
    */
   protected performAction(context: ExecutionContext): void {
     // Determine search direction based on the keystroke pattern
-    // The pattern is determined by the plugin execution context
-    this.searchForward = this.determineSearchDirection(context);
+    const pattern = context.getCurrentPattern();
+    this.searchForward = pattern === '/';
+
+    // Store the search direction in the state for use during search execution
+    context.getState().setSearchForward(this.searchForward);
 
     // Transition to SEARCH mode to allow user to enter pattern
     context.setMode(VIM_MODE.SEARCH);
 
     // Clear any previous search pattern for a fresh search
     context.getState().clearSearchPattern();
-  }
-
-  /**
-   * Determine search direction from the execution context
-   *
-   * Checks the current keystroke pattern to determine if this is
-   * a forward (/) or backward (?) search.
-   *
-   * @param context - The execution context
-   * @returns True for forward search, false for backward
-   */
-  private determineSearchDirection(_context: ExecutionContext): boolean {
-    // Get the current state to check what triggered this
-    // For "/" we search forward, for "?" we search backward
-    // The pattern is passed through the VimExecutor's handleKeystroke method
-
-    // Check if we can determine the pattern from context
-    // For now, default to forward search
-    // This will be updated when the keystroke handling is完善
-    return true;
   }
 }
