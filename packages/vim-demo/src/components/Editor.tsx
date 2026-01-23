@@ -197,7 +197,7 @@ export function Editor() {
         {/* Search input overlay */}
         {vimState.mode === VIM_MODE.SEARCH && (
           <div className="search-overlay absolute bottom-0 left-0 right-0 bg-gray-800 p-2 flex items-center border-t border-gray-700">
-            <span className="search-prompt text-yellow-400 mr-2 font-mono">/</span>
+            <span className="search-prompt text-yellow-400 mr-2 font-mono">{vimState.isSearchForward() ? '/' : '?'}</span>
             <input
               type="text"
               value={searchPattern}

@@ -810,9 +810,12 @@ export class VimExecutor {
     const pattern = state.getCurrentSearchPattern();
     const buffer = state.buffer;
     const cursor = state.cursor;
+    const searchForward = state.isSearchForward();
 
-    // Search from current position (line, column + 1 to avoid current match)
-    const match = this.findNextMatch(buffer, pattern, cursor.line, cursor.column);
+    // Search based on direction
+    const match = searchForward
+      ? this.findNextMatch(buffer, pattern, cursor.line, cursor.column)
+      : this.findPreviousMatch(buffer, pattern, cursor.line, cursor.column);
 
     if (match) {
       // Save the pattern for future n/N commands
@@ -916,6 +919,52 @@ export class VimExecutor {
     for (let line = 0; line < startLine; line++) {
       const lineContent = buffer.getLine(line) || '';
       const matchIndex = lineContent.indexOf(pattern);
+      if (matchIndex !== -1) {
+        return { line, column: matchIndex };
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * Find previous occurrence of pattern in buffer
+   *
+   * @param buffer - The text buffer to search
+   * @param pattern - The search pattern
+   * @param startLine - Line to start searching from
+   * @param startColumn - Column to start searching from
+   * @returns Position of match or null if not found
+   * @private
+   */
+  private findPreviousMatch(
+    buffer: TextBuffer,
+    pattern: string,
+    startLine: number,
+    startColumn: number,
+  ): { line: number; column: number } | null {
+    if (!pattern) return null;
+
+    const lineCount = buffer.getLineCount();
+    if (lineCount === 0) return null;
+
+    // Search backward from current position to beginning of buffer
+    for (let line = startLine; line >= 0; line--) {
+      const lineContent = buffer.getLine(line) || '';
+      const searchEndColumn = line === startLine ? startColumn : lineContent.length;
+      const searchText = lineContent.slice(0, searchEndColumn);
+
+      // Find the last occurrence in the search range
+      const matchIndex = searchText.lastIndexOf(pattern);
+      if (matchIndex !== -1) {
+        return { line, column: matchIndex };
+      }
+    }
+
+    // Wrap around to end of buffer
+    for (let line = lineCount - 1; line > startLine; line--) {
+      const lineContent = buffer.getLine(line) || '';
+      const matchIndex = lineContent.lastIndexOf(pattern);
       if (matchIndex !== -1) {
         return { line, column: matchIndex };
       }
