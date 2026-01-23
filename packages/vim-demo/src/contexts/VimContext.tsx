@@ -32,6 +32,7 @@ import {
   SearchPlugin,
   NMovementPlugin,
   NCapitalMovementPlugin,
+  HashMovementPlugin,
   StarMovementPlugin,
   FForwardMovementPlugin,
   FBackwardMovementPlugin,
@@ -124,6 +125,7 @@ export function VimProvider({ children, initialContent = '' }: VimProviderProps)
     // Register N (capital) movement plugin for navigating to previous search results
     engine.registerPlugin(new NCapitalMovementPlugin());
     // Register * movement plugin for searching word under cursor
+    engine.registerPlugin(new HashMovementPlugin());
     engine.registerPlugin(new StarMovementPlugin());
 
     // Register character search plugins
