@@ -6,9 +6,9 @@
  *
  * @example
  * ```typescript
- * import { NMovementPlugin } from './N-capital/NMovementPlugin';
+ * import { NCapitalMovementPlugin } from './N-capital/NCapitalMovementPlugin';
  *
- * const plugin = new NMovementPlugin();
+ * const plugin = new NCapitalMovementPlugin();
  * // Press 'N' after a search to go to previous match
  * ```
  *
@@ -23,7 +23,7 @@ import { CursorPosition } from '../../../state/CursorPosition';
 import { findNextMatch, findPreviousMatch } from '../searchUtils';
 
 /**
- * N-capital MovementPlugin - Navigate to previous search match
+ * NCapitalMovementPlugin - Navigate to previous search match
  *
  * The 'N' key in vim normal mode moves the cursor to the previous occurrence
  * of the last search pattern in the **reverse of the original search direction**.
@@ -40,7 +40,7 @@ import { findNextMatch, findPreviousMatch } from '../searchUtils';
  * This plugin complements the NMovementPlugin (lowercase n) which navigates
  * in the original direction.
  */
-export class NMovementPlugin extends AbstractVimPlugin {
+export class NCapitalMovementPlugin extends AbstractVimPlugin {
   /**
    * Plugin name
    */
@@ -67,7 +67,7 @@ export class NMovementPlugin extends AbstractVimPlugin {
   readonly modes: VimMode[] = [VIM_MODE.NORMAL, VIM_MODE.VISUAL];
 
   /**
-   * Create a new NMovementPlugin instance
+   * Create a new NCapitalMovementPlugin instance
    */
   constructor() {
     super('search-N', 'Navigate to previous search match (N key)', ['N'], [

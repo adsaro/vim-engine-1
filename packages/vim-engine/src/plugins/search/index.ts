@@ -21,7 +21,7 @@
 export { SearchPlugin } from './SearchPlugin';
 export { SearchState, type SearchResult } from './SearchState';
 export { NMovementPlugin } from './n';
-export { NMovementPlugin as NCapitalMovementPlugin } from './N-capital';
+export { NCapitalMovementPlugin } from './N-capital';
 export { StarMovementPlugin } from './star';
 export { HashMovementPlugin } from './hash';
 export * from './searchUtils';
