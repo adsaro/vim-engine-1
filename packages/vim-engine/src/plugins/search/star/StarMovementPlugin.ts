@@ -136,6 +136,9 @@ export class StarMovementPlugin extends AbstractVimPlugin {
     // Set the word as the last search pattern (as a regexp)
     vimState.setLastSearchPattern(wholeWordPattern);
 
+    // Set search direction to forward (since * is forward search)
+    vimState.setSearchForward(true);
+
     // Find the next occurrence of the word
     // We search from current position + 1 to avoid matching the current word
     const match = findNextMatch(buffer, wholeWordPattern, cursor.line, cursor.column);

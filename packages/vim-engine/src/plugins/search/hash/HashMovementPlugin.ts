@@ -136,6 +136,9 @@ export class HashMovementPlugin extends AbstractVimPlugin {
     // Set the word as the last search pattern (as a regexp)
     vimState.setLastSearchPattern(wholeWordPattern);
 
+    // Set search direction to backward (since # is backward search)
+    vimState.setSearchForward(false);
+
     // Find the previous occurrence of the word
     // We search from current position - 1 to avoid matching the current word
     const match = findPreviousMatch(buffer, wholeWordPattern, cursor.line, cursor.column);

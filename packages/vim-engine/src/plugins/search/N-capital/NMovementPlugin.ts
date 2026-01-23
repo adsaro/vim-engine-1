@@ -20,23 +20,25 @@ import { AbstractVimPlugin } from '../../../plugin/AbstractVimPlugin';
 import { ExecutionContext } from '../../../plugin/ExecutionContext';
 import { VIM_MODE, VimMode } from '../../../state/VimMode';
 import { CursorPosition } from '../../../state/CursorPosition';
-import { findPreviousMatch } from '../searchUtils';
+import { findNextMatch, findPreviousMatch } from '../searchUtils';
 
 /**
  * N-capital MovementPlugin - Navigate to previous search match
  *
  * The 'N' key in vim normal mode moves the cursor to the previous occurrence
- * of the last search pattern. This is the reverse of the 'n' command.
+ * of the last search pattern in the **reverse of the original search direction**.
+ * If the original search was forward (/ or *), then 'N' searches backward.
+ * If the original search was backward (? or #), then 'N' searches forward.
  * If no search pattern has been set, pressing 'N' does nothing.
  *
  * Behavior:
- * - N: Jump to previous occurrence of last search pattern
- * - Uses wrap-around (continues from bottom of file when reaching top)
+ * - N: Jump to previous occurrence in the reverse of the original search direction
+ * - Uses wrap-around (continues from top/bottom when reaching end/beginning)
  * - If no pattern is set, stays at current position
  * - If no match exists, stays at current position
  *
  * This plugin complements the NMovementPlugin (lowercase n) which navigates
- * to the next match.
+ * in the original direction.
  */
 export class NMovementPlugin extends AbstractVimPlugin {
   /**
@@ -78,8 +80,8 @@ export class NMovementPlugin extends AbstractVimPlugin {
    * Perform the search navigation action
    *
    * This method is called when 'N' is pressed in normal or visual mode.
-   * It finds the previous occurrence of the last search pattern and moves
-   * the cursor to that position.
+   * It finds the previous occurrence of the last search pattern in the
+   * **reverse of the original search direction** and moves the cursor to that position.
    *
    * @param context - The execution context containing vim state and buffer
    */
@@ -101,9 +103,16 @@ export class NMovementPlugin extends AbstractVimPlugin {
       return;
     }
 
-    // Find the previous match from the current cursor position
-    // findPreviousMatch searches backward and wraps around
-    const match = findPreviousMatch(buffer, pattern, cursor.line, cursor.column);
+    // Get the original search direction from the state
+    // searchForward = true means the original search was / or *
+    // searchForward = false means the original search was ? or #
+    // For 'N', we search in the REVERSE direction
+    const searchForward = vimState.isSearchForward();
+
+    // Find the next match in the REVERSE of the original search direction
+    const match = searchForward
+      ? findPreviousMatch(buffer, pattern, cursor.line, cursor.column)
+      : findNextMatch(buffer, pattern, cursor.line, cursor.column);
 
     // If a match was found, move the cursor to that position
     if (match) {
