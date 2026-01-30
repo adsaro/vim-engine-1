@@ -97,6 +97,12 @@ vim-engine/
 | `gg` | Move to beginning of file    |
 | `G`  | Move to end of file          |
 
+## Supported Operators
+
+| Key  | Description                       |
+| ---- | --------------------------------- |
+| `x`  | Delete character under cursor     |
+
 ## Supported Modes
 
 | Mode    | Color  | Description                |

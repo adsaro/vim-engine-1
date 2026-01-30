@@ -19,6 +19,7 @@ import {
   NCapitalMovementPlugin,
   HashMovementPlugin,
   StarMovementPlugin,
+  XDeletePlugin,
 } from '@vim-engine/core';
 
 interface UseVimEngineOptions {
@@ -83,6 +84,9 @@ export function useVimEngine(options: UseVimEngineOptions = {}): UseVimEngineRet
     // Register * movement plugin for searching word under cursor
     engine.registerPlugin(new HashMovementPlugin());
     engine.registerPlugin(new StarMovementPlugin());
+
+    // Register operator plugins
+    engine.registerPlugin(new XDeletePlugin());
 
     engine.start();
     engineRef.current = engine;
