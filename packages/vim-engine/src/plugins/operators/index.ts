@@ -3,4 +3,5 @@
  */
 export * from './x';
 export * from './X-capital';
+export * from './D-capital';
 export * from './delete';
