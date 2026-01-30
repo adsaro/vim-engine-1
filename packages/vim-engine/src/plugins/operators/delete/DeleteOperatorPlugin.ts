@@ -85,6 +85,8 @@ export class DeleteOperatorPlugin extends AbstractVimPlugin {
         // Enter operator-pending mode, waiting for motion
         context.setMode(VIM_MODE.OPERATOR_PENDING);
         context.getState().setPendingOperator('d');
+        // Save the count for when the motion/second operator comes
+        context.getState().setPendingCount(context.getCount() || 1);
       }
     } else if (currentMode === VIM_MODE.OPERATOR_PENDING) {
       // Second 'd' in operator-pending mode means delete line
@@ -100,10 +102,13 @@ export class DeleteOperatorPlugin extends AbstractVimPlugin {
    *
    * @param context - The execution context
    */
-  private deleteLine(context: ExecutionContext): void {
+  deleteLine(context: ExecutionContext): void {
     const buffer = context.getBuffer();
     const cursor = context.getCursor();
-    const count = context.getCount();
+    // Use pending count if in operator-pending mode, otherwise use current count
+    const count = context.getMode() === VIM_MODE.OPERATOR_PENDING 
+      ? context.getState().getPendingCount()
+      : (context.getCount() || 1);
 
     if (buffer.isEmpty()) {
       return;
@@ -151,9 +156,10 @@ export class DeleteOperatorPlugin extends AbstractVimPlugin {
    *
    * @param context - The execution context
    * @param from - Start position
-   * @param to - End position (exclusive)
+   * @param to - End position from motion
+   * @param inclusive - Whether the motion is inclusive (default false for exclusive)
    */
-  executeDeleteWithMotion(context: ExecutionContext, from: CursorPosition, to: CursorPosition): void {
+  executeDeleteWithMotion(context: ExecutionContext, from: CursorPosition, to: CursorPosition, inclusive: boolean = false): void {
     const buffer = context.getBuffer();
 
     if (buffer.isEmpty()) {
@@ -161,7 +167,12 @@ export class DeleteOperatorPlugin extends AbstractVimPlugin {
     }
 
     // Ensure from is before to
-    const [start, end] = this.comparePositions(from, to) <= 0 ? [from, to] : [to, from];
+    const [start, rawEnd] = this.comparePositions(from, to) <= 0 ? [from, to] : [to, from];
+
+    // Adjust end position based on whether motion is inclusive or exclusive
+    const end = inclusive 
+      ? this.adjustEndForInclusive(buffer, start, rawEnd)
+      : rawEnd;
 
     // Store deleted text
     const deletedText = this.extractText(buffer, start, end);
@@ -172,6 +183,30 @@ export class DeleteOperatorPlugin extends AbstractVimPlugin {
 
     // Move cursor to start position
     context.setCursor(new CursorPosition(start.line, start.column));
+  }
+
+  /**
+   * Adjust end position to make it inclusive (vim-style)
+   *
+   * @param buffer - The text buffer
+   * @param start - Start position
+   * @param end - Raw end position from motion
+   * @returns Adjusted end position that includes the target character
+   */
+  private adjustEndForInclusive(buffer: TextBuffer, start: CursorPosition, end: CursorPosition): CursorPosition {
+    if (start.line === end.line) {
+      // Same line: include the character at end position by adding 1 to column
+      const line = buffer.getLine(end.line);
+      if (line === null) return end;
+      // Don't go past end of line
+      const newColumn = Math.min(end.column + 1, line.length);
+      return new CursorPosition(end.line, newColumn);
+    } else {
+      // Multi-line: include full last line by setting column to line length
+      const line = buffer.getLine(end.line);
+      if (line === null) return end;
+      return new CursorPosition(end.line, line.length);
+    }
   }
 
   /**
