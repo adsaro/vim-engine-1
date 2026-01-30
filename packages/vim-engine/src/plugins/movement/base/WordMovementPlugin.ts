@@ -17,7 +17,7 @@
  *   readonly version = '1.0.0';
  *   readonly description = 'Move cursor to start of next word (w key)';
  *   readonly patterns = ['w'];
- *   readonly modes: VimMode[] = [VIM_MODE.NORMAL, VIM_MODE.VISUAL];
+ *   readonly modes: VimMode[] = [VIM_MODE.NORMAL, VIM_MODE.VISUAL, VIM_MODE.OPERATOR_PENDING];
  *
  *   protected get direction(): 'forward' | 'backward' {
  *     return 'forward';

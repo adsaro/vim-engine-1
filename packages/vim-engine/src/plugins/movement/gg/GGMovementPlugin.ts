@@ -77,7 +77,7 @@ export class GGMovementPlugin extends DocumentNavigationPlugin {
   /**
    * Modes this plugin is active in
    */
-  readonly modes: VimMode[] = [VIM_MODE.NORMAL, VIM_MODE.VISUAL];
+  readonly modes: VimMode[] = [VIM_MODE.NORMAL, VIM_MODE.VISUAL, VIM_MODE.OPERATOR_PENDING];
 
   /**
    * Create a new GGMovementPlugin
@@ -89,7 +89,7 @@ export class GGMovementPlugin extends DocumentNavigationPlugin {
       'movement-gg',
       'Jump to first line of document',
       'gg',
-      [VIM_MODE.NORMAL, VIM_MODE.VISUAL],
+      [VIM_MODE.NORMAL, VIM_MODE.VISUAL, VIM_MODE.OPERATOR_PENDING],
       config
     );
   }

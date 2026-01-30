@@ -50,7 +50,7 @@ export class BMovementPlugin extends WordMovementPlugin {
   /**
    * Modes this plugin is active in
    */
-  readonly modes: VimMode[] = [VIM_MODE.NORMAL, VIM_MODE.VISUAL];
+  readonly modes: VimMode[] = [VIM_MODE.NORMAL, VIM_MODE.VISUAL, VIM_MODE.OPERATOR_PENDING];
 
   /**
    * Create a new BMovementPlugin instance
@@ -62,7 +62,7 @@ export class BMovementPlugin extends WordMovementPlugin {
       'movement-b',
       'Move cursor to start of previous word (b key)',
       'b',
-      [VIM_MODE.NORMAL, VIM_MODE.VISUAL],
+      [VIM_MODE.NORMAL, VIM_MODE.VISUAL, VIM_MODE.OPERATOR_PENDING],
       config
     );
   }

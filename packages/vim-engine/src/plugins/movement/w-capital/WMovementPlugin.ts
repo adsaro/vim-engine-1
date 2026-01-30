@@ -51,7 +51,7 @@ export class WMovementPlugin extends WordMovementPlugin {
   /**
    * Modes this plugin is active in
    */
-  readonly modes: VimMode[] = [VIM_MODE.NORMAL, VIM_MODE.VISUAL];
+  readonly modes: VimMode[] = [VIM_MODE.NORMAL, VIM_MODE.VISUAL, VIM_MODE.OPERATOR_PENDING];
 
   /**
    * Create a new WMovementPlugin instance
@@ -63,7 +63,7 @@ export class WMovementPlugin extends WordMovementPlugin {
       'movement-W',
       'Move cursor to start of next WORD (W key)',
       'W',
-      [VIM_MODE.NORMAL, VIM_MODE.VISUAL],
+      [VIM_MODE.NORMAL, VIM_MODE.VISUAL, VIM_MODE.OPERATOR_PENDING],
       config
     );
   }

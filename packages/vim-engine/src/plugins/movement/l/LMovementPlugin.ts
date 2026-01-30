@@ -49,7 +49,7 @@ export class LMovementPlugin extends DirectionalMovementPlugin {
   /**
    * Modes this plugin is active in
    */
-  readonly modes: VimMode[] = [VIM_MODE.NORMAL, VIM_MODE.VISUAL];
+  readonly modes: VimMode[] = [VIM_MODE.NORMAL, VIM_MODE.VISUAL, VIM_MODE.OPERATOR_PENDING];
 
   /**
    * Create a new LMovementPlugin
@@ -61,7 +61,7 @@ export class LMovementPlugin extends DirectionalMovementPlugin {
       'movement-l',
       'Move cursor right (l key)',
       'l',
-      [VIM_MODE.NORMAL, VIM_MODE.VISUAL],
+      [VIM_MODE.NORMAL, VIM_MODE.VISUAL, VIM_MODE.OPERATOR_PENDING],
       config
     );
   }

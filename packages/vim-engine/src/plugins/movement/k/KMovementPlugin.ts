@@ -51,7 +51,7 @@ export class KMovementPlugin extends DirectionalMovementPlugin {
   /**
    * Modes this plugin is active in
    */
-  readonly modes: VimMode[] = [VIM_MODE.NORMAL, VIM_MODE.VISUAL];
+  readonly modes: VimMode[] = [VIM_MODE.NORMAL, VIM_MODE.VISUAL, VIM_MODE.OPERATOR_PENDING];
 
   /**
    * Create a new KMovementPlugin
@@ -59,7 +59,7 @@ export class KMovementPlugin extends DirectionalMovementPlugin {
    * @param config - Optional movement configuration
    */
   constructor(config?: MovementConfig) {
-    super('movement-k', 'Move cursor up (k key)', 'k', [VIM_MODE.NORMAL, VIM_MODE.VISUAL], config);
+    super('movement-k', 'Move cursor up (k key)', 'k', [VIM_MODE.NORMAL, VIM_MODE.VISUAL, VIM_MODE.OPERATOR_PENDING], config);
   }
 
   /**
