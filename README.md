@@ -99,10 +99,13 @@ vim-engine/
 
 ## Supported Operators
 
-| Key  | Description                       |
-| ---- | --------------------------------- |
-| `x`  | Delete character under cursor     |
-| `X`  | Delete character before cursor    |
+| Key      | Description                       |
+| -------- | --------------------------------- |
+| `x`      | Delete character under cursor     |
+| `X`      | Delete character before cursor    |
+| `d`      | Delete operator (waits for motion)|
+| `dd`     | Delete current line               |
+| `dw`     | Delete word                       |
 
 ## Supported Modes
 

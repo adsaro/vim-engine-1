@@ -41,7 +41,7 @@
 import { VimPlugin } from '../plugin/VimPlugin';
 import { PluginRegistry } from '../plugin/PluginRegistry';
 import { ExecutionContext } from '../plugin/ExecutionContext';
-import { VimMode, VimState } from '../state';
+import { VimMode, VimState, VIM_MODE } from '../state';
 import { CursorPosition } from '../state/CursorPosition';
 import { TextBuffer } from '../state/TextBuffer';
 import { CommandRouter } from './CommandRouter';
@@ -536,10 +536,66 @@ export class VimExecutor {
   private executeCommand(command: string): void {
     // Set the current pattern in the execution context before executing
     this.executionContext.setCurrentPattern(command);
-    this.commandRouter.executeSync(command, this.executionContext);
+
+    // Check if we're in operator-pending mode
+    if (this.executionContext.getMode() === VIM_MODE.OPERATOR_PENDING) {
+      this.handleOperatorPendingCommand(command);
+    } else {
+      this.commandRouter.executeSync(command, this.executionContext);
+    }
+
     this.keystrokeCount++;
     this.executionContext.setCount(0);
     this.clearKeystrokeBuffer();
+  }
+
+  /**
+   * Handle command when in operator-pending mode
+   *
+   * Executes the motion and then applies the pending operator.
+   *
+   * @param command - The motion command
+   */
+  private handleOperatorPendingCommand(command: string): void {
+    const pendingOperator = this.executionContext.getState().getPendingOperator();
+    if (!pendingOperator) {
+      // No pending operator, just execute the motion
+      this.commandRouter.executeSync(command, this.executionContext);
+      return;
+    }
+
+    // Get the motion plugin
+    const motionPlugin = this.commandRouter.matchPattern(command);
+    if (!motionPlugin) {
+      // Unknown motion, cancel operator-pending mode
+      this.executionContext.setMode(VIM_MODE.NORMAL);
+      this.executionContext.getState().setPendingOperator(null);
+      return;
+    }
+
+    // Save current position
+    const startPosition = this.executionContext.getCursor().clone();
+
+    // Execute the motion to get to the target position
+    this.commandRouter.executeSync(command, this.executionContext);
+
+    // Get the target position
+    const endPosition = this.executionContext.getCursor().clone();
+
+    // Restore start position
+    this.executionContext.setCursor(startPosition);
+
+    // Get the operator plugin
+    const operatorPlugin = this.commandRouter.matchPattern(pendingOperator);
+    if (operatorPlugin && 'executeDeleteWithMotion' in operatorPlugin) {
+      // Execute the operator with the motion range
+      (operatorPlugin as { executeDeleteWithMotion: (context: ExecutionContext, from: CursorPosition, to: CursorPosition) => void })
+        .executeDeleteWithMotion(this.executionContext, startPosition, endPosition);
+    }
+
+    // Return to normal mode
+    this.executionContext.setMode(VIM_MODE.NORMAL);
+    this.executionContext.getState().setPendingOperator(null);
   }
 
   /**
