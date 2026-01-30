@@ -5,3 +5,4 @@
 export * from './movement';
 export * from './search';
 export * from './operators';
+export * from './textobjects';

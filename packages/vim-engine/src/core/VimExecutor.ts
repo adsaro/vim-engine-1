@@ -554,7 +554,7 @@ export class VimExecutor {
    *
    * Executes the motion and then applies the pending operator.
    *
-   * @param command - The motion command
+   * @param command - The motion command or text object prefix
    */
   private handleOperatorPendingCommand(command: string): void {
     const pendingOperator = this.executionContext.getState().getPendingOperator();
@@ -578,6 +578,13 @@ export class VimExecutor {
       // Return to normal mode
       this.executionContext.setMode(VIM_MODE.NORMAL);
       this.executionContext.getState().setPendingOperator(null);
+      return;
+    }
+
+    // Check if this is a text object (e.g., "iw", "aw")
+    // Text objects are two-character patterns starting with 'i' or 'a'
+    if (command.length === 2 && (command[0] === 'i' || command[0] === 'a')) {
+      this.handleTextObject(command, pendingOperator);
       return;
     }
 
@@ -623,6 +630,44 @@ export class VimExecutor {
     // Return to normal mode
     this.executionContext.setMode(VIM_MODE.NORMAL);
     this.executionContext.getState().setPendingOperator(null);
+  }
+
+  /**
+   * Handle a text object command
+   *
+   * @param textObject - The text object pattern (e.g., "iw", "aw")
+   * @param pendingOperator - The pending operator (e.g., "d", "c", "y")
+   */
+  private handleTextObject(textObject: string, pendingOperator: string): void {
+    // Get the text object plugin
+    const textObjectPlugin = this.commandRouter.matchPattern(textObject);
+    if (!textObjectPlugin || !('getWordBoundaries' in textObjectPlugin)) {
+      // Unknown text object, cancel operator-pending mode
+      this.executionContext.setMode(VIM_MODE.NORMAL);
+      this.executionContext.getState().setPendingOperator(null);
+      this.executionContext.getState().setPendingTextObjectPrefix(null);
+      return;
+    }
+
+    // Get the word boundaries from the text object
+    const boundaries = (textObjectPlugin as { getWordBoundaries: (context: ExecutionContext) => { start: CursorPosition; end: CursorPosition } | null })
+      .getWordBoundaries(this.executionContext);
+
+    if (boundaries) {
+      // Get the operator plugin
+      const operatorPlugin = this.commandRouter.matchPattern(pendingOperator);
+      if (operatorPlugin && 'executeDeleteWithMotion' in operatorPlugin) {
+        // Execute the operator with the text object range
+        // Text objects return exclusive end positions (already correct)
+        (operatorPlugin as { executeDeleteWithMotion: (context: ExecutionContext, from: CursorPosition, to: CursorPosition, inclusive?: boolean) => void })
+          .executeDeleteWithMotion(this.executionContext, boundaries.start, boundaries.end, false);
+      }
+    }
+
+    // Return to normal mode and clear pending states
+    this.executionContext.setMode(VIM_MODE.NORMAL);
+    this.executionContext.getState().setPendingOperator(null);
+    this.executionContext.getState().setPendingTextObjectPrefix(null);
   }
 
   /**
