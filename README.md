@@ -103,9 +103,11 @@ vim-engine/
 | -------- | --------------------------------- |
 | `x`      | Delete character under cursor     |
 | `X`      | Delete character before cursor    |
+| `D`      | Delete to end of line             |
 | `d`      | Delete operator (waits for motion)|
 | `dd`     | Delete current line               |
 | `dw`     | Delete word                       |
+| `d$`     | Delete to end of line             |
 
 ## Supported Modes
 
