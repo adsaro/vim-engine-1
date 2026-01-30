@@ -82,32 +82,88 @@ vim-engine/
 
 ## Supported Vim Motions
 
+All motion commands work with operators (like `d` for delete).
+
+### Basic Motions
+
 | Key  | Description                  |
 | ---- | ---------------------------- |
 | `h`  | Move left                    |
 | `j`  | Move down                    |
 | `k`  | Move up                      |
 | `l`  | Move right                   |
+
+### Word Motions
+
+| Key  | Description                  |
+| ---- | ---------------------------- |
 | `w`  | Move to next word            |
+| `W`  | Move to next WORD            |
 | `b`  | Move to previous word        |
+| `B`  | Move to previous WORD        |
 | `e`  | Move to end of word          |
+| `E`  | Move to end of WORD          |
 | `ge` | Move to end of previous word |
-| `0`  | Move to beginning of line    |
-| `$`  | Move to end of line          |
+| `gE` | Move to end of previous WORD |
+
+### Line Motions
+
+| Key      | Description                       |
+| -------- | --------------------------------- |
+| `0`      | Move to beginning of line         |
+| `^`      | Move to first non-blank character |
+| `$`      | Move to end of line               |
+| `g_`     | Move to last non-blank character  |
+
+### Document Motions
+
+| Key  | Description                  |
+| ---- | ---------------------------- |
 | `gg` | Move to beginning of file    |
 | `G`  | Move to end of file          |
 
+### Character Search Motions
+
+| Key          | Description                           |
+| ------------ | ------------------------------------- |
+| `f{char}`    | Move to next occurrence of character  |
+| `F{char}`    | Move to previous occurrence           |
+| `t{char}`    | Move till before next character       |
+| `T{char}`    | Move till after previous character    |
+| `;`          | Repeat last f/F/t/T                   |
+| `,`          | Repeat last f/F/t/T in reverse        |
+
 ## Supported Operators
+
+### Single-Key Operators
 
 | Key      | Description                       |
 | -------- | --------------------------------- |
 | `x`      | Delete character under cursor     |
 | `X`      | Delete character before cursor    |
 | `D`      | Delete to end of line             |
-| `d`      | Delete operator (waits for motion)|
+
+### Delete Operator (`d`)
+
+The `d` operator can be combined with any motion command. Press `d` followed by a motion to delete text from the cursor to the target position.
+
+| Command  | Description                       |
+| -------- | --------------------------------- |
 | `dd`     | Delete current line               |
-| `dw`     | Delete word                       |
-| `d$`     | Delete to end of line             |
+| `2dd`    | Delete 2 lines                    |
+| `dw`     | Delete to start of next word      |
+| `3dw`    | Delete 3 words                    |
+| `db`     | Delete to start of previous word  |
+| `de`     | Delete to end of word             |
+| `d$` or `D` | Delete to end of line          |
+| `d0`     | Delete to beginning of line       |
+| `dgg`    | Delete to beginning of file       |
+| `dG`     | Delete to end of file             |
+| `dh`     | Delete character left             |
+| `dl`     | Delete character right            |
+| `dj`     | Delete current and next line      |
+| `dk`     | Delete current and previous line  |
+| `df{char}` | Delete to (and including) character |
 
 ## Supported Modes
 
