@@ -164,6 +164,7 @@ The `d` operator can be combined with any motion command. Press `d` followed by 
 | `dj`     | Delete current and next line      |
 | `dk`     | Delete current and previous line  |
 | `df{char}` | Delete to (and including) character |
+| `diw`    | Delete inside word                |
 
 ## Supported Modes
 

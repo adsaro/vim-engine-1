@@ -44,6 +44,7 @@ import {
   XCapitalDeletePlugin,
   DCapitalDeletePlugin,
   DeleteOperatorPlugin,
+  InsideWordTextObject,
 } from '@vim-engine/core';
 
 interface VimContextType {
@@ -146,6 +147,9 @@ export function VimProvider({ children, initialContent = '' }: VimProviderProps)
     engine.registerPlugin(new XCapitalDeletePlugin());
     engine.registerPlugin(new DCapitalDeletePlugin());
     engine.registerPlugin(new DeleteOperatorPlugin());
+
+    // Register text object plugins
+    engine.registerPlugin(new InsideWordTextObject());
 
     engine.start();
 

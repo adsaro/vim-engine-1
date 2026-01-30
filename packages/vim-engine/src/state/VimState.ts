@@ -137,6 +137,11 @@ export class VimState {
   private _pendingCount: number = 1;
 
   /**
+   * Pending text object prefix (i = inside, a = around)
+   */
+  private _pendingTextObjectPrefix: string | null = null;
+
+  /**
    * Create a new VimState
    *
    * @param initialContent - Initial text content (string or TextBuffer)
@@ -491,6 +496,7 @@ export class VimState {
     cloned._lastCharSearch = this._lastCharSearch ? { ...this._lastCharSearch } : null;
     cloned._pendingOperator = this._pendingOperator;
     cloned._pendingCount = this._pendingCount;
+    cloned._pendingTextObjectPrefix = this._pendingTextObjectPrefix;
 
     return cloned;
   }
@@ -526,6 +532,7 @@ export class VimState {
     this._lastCharSearch = null;
     this._pendingOperator = null;
     this._pendingCount = 1;
+    this._pendingTextObjectPrefix = null;
   }
 
   /**
@@ -614,5 +621,37 @@ export class VimState {
    */
   setPendingCount(count: number): void {
     this._pendingCount = count;
+  }
+
+  /**
+   * Get the pending text object prefix
+   *
+   * @returns {string | null} The pending prefix ('i' or 'a') or null
+   *
+   * @example
+   * ```typescript
+   * const prefix = state.getPendingTextObjectPrefix();
+   * if (prefix === 'i') {
+   *   // Handle inside text object
+   * }
+   * ```
+   */
+  getPendingTextObjectPrefix(): string | null {
+    return this._pendingTextObjectPrefix;
+  }
+
+  /**
+   * Set the pending text object prefix
+   *
+   * @param prefix - The prefix ('i' for inside, 'a' for around) or null to clear
+   *
+   * @example
+   * ```typescript
+   * state.setPendingTextObjectPrefix('i'); // Set inside prefix
+   * state.setPendingTextObjectPrefix(null); // Clear prefix
+   * ```
+   */
+  setPendingTextObjectPrefix(prefix: string | null): void {
+    this._pendingTextObjectPrefix = prefix;
   }
 }
