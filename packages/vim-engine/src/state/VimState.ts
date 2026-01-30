@@ -132,6 +132,11 @@ export class VimState {
   private _pendingOperator: string | null = null;
 
   /**
+   * Saved count for operator-pending mode
+   */
+  private _pendingCount: number = 1;
+
+  /**
    * Create a new VimState
    *
    * @param initialContent - Initial text content (string or TextBuffer)
@@ -485,6 +490,7 @@ export class VimState {
     cloned._searchForward = this._searchForward;
     cloned._lastCharSearch = this._lastCharSearch ? { ...this._lastCharSearch } : null;
     cloned._pendingOperator = this._pendingOperator;
+    cloned._pendingCount = this._pendingCount;
 
     return cloned;
   }
@@ -519,6 +525,7 @@ export class VimState {
     this._searchForward = true;
     this._lastCharSearch = null;
     this._pendingOperator = null;
+    this._pendingCount = 1;
   }
 
   /**
@@ -579,5 +586,33 @@ export class VimState {
    */
   setPendingOperator(operator: string | null): void {
     this._pendingOperator = operator;
+  }
+
+  /**
+   * Get the pending count for operator-pending mode
+   *
+   * @returns {number} The saved count (default 1)
+   *
+   * @example
+   * ```typescript
+   * const count = state.getPendingCount();
+   * ```
+   */
+  getPendingCount(): number {
+    return this._pendingCount;
+  }
+
+  /**
+   * Set the pending count for operator-pending mode
+   *
+   * @param count - The count to save
+   *
+   * @example
+   * ```typescript
+   * state.setPendingCount(3); // Save count of 3
+   * ```
+   */
+  setPendingCount(count: number): void {
+    this._pendingCount = count;
   }
 }

@@ -564,6 +564,23 @@ export class VimExecutor {
       return;
     }
 
+    // Check if this is a double-operator (e.g., dd, cc, yy)
+    // When the same key is pressed twice, it should apply to the current line
+    if (command === pendingOperator) {
+      // Get the operator plugin
+      const operatorPlugin = this.commandRouter.matchPattern(pendingOperator);
+      if (operatorPlugin && 'deleteLine' in operatorPlugin) {
+        // Call the deleteLine method directly
+        (operatorPlugin as { deleteLine: (context: ExecutionContext) => void })
+          .deleteLine(this.executionContext);
+      }
+
+      // Return to normal mode
+      this.executionContext.setMode(VIM_MODE.NORMAL);
+      this.executionContext.getState().setPendingOperator(null);
+      return;
+    }
+
     // Get the motion plugin
     const motionPlugin = this.commandRouter.matchPattern(command);
     if (!motionPlugin) {
@@ -575,6 +592,10 @@ export class VimExecutor {
 
     // Save current position
     const startPosition = this.executionContext.getCursor().clone();
+
+    // Get the pending count for the motion (default to 1)
+    const pendingCount = this.executionContext.getState().getPendingCount();
+    this.executionContext.setCount(pendingCount);
 
     // Execute the motion to get to the target position
     this.commandRouter.executeSync(command, this.executionContext);
@@ -588,9 +609,15 @@ export class VimExecutor {
     // Get the operator plugin
     const operatorPlugin = this.commandRouter.matchPattern(pendingOperator);
     if (operatorPlugin && 'executeDeleteWithMotion' in operatorPlugin) {
+      // Determine if motion is inclusive based on command type
+      // Inclusive motions: $ (end of line), % (matching bracket), etc.
+      // Exclusive motions: w, b, e, h, j, k, l, etc.
+      const inclusiveMotions = ['$'];
+      const isInclusive = inclusiveMotions.includes(command);
+      
       // Execute the operator with the motion range
-      (operatorPlugin as { executeDeleteWithMotion: (context: ExecutionContext, from: CursorPosition, to: CursorPosition) => void })
-        .executeDeleteWithMotion(this.executionContext, startPosition, endPosition);
+      (operatorPlugin as { executeDeleteWithMotion: (context: ExecutionContext, from: CursorPosition, to: CursorPosition, inclusive?: boolean) => void })
+        .executeDeleteWithMotion(this.executionContext, startPosition, endPosition, isInclusive);
     }
 
     // Return to normal mode
