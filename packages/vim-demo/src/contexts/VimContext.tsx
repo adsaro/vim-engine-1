@@ -40,6 +40,7 @@ import {
   TBackwardMovementPlugin,
   SemicolonMovementPlugin,
   CommaMovementPlugin,
+  XDeletePlugin,
 } from '@vim-engine/core';
 
 interface VimContextType {
@@ -136,6 +137,9 @@ export function VimProvider({ children, initialContent = '' }: VimProviderProps)
     // Register repeat plugins
     engine.registerPlugin(new SemicolonMovementPlugin());
     engine.registerPlugin(new CommaMovementPlugin());
+
+    // Register operator plugins
+    engine.registerPlugin(new XDeletePlugin());
 
     engine.start();
 
