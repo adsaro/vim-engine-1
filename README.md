@@ -102,6 +102,7 @@ vim-engine/
 | Key  | Description                       |
 | ---- | --------------------------------- |
 | `x`  | Delete character under cursor     |
+| `X`  | Delete character before cursor    |
 
 ## Supported Modes
 
