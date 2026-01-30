@@ -42,6 +42,7 @@ import {
   CommaMovementPlugin,
   XDeletePlugin,
   XCapitalDeletePlugin,
+  DeleteOperatorPlugin,
 } from '@vim-engine/core';
 
 interface VimContextType {
@@ -142,6 +143,7 @@ export function VimProvider({ children, initialContent = '' }: VimProviderProps)
     // Register operator plugins
     engine.registerPlugin(new XDeletePlugin());
     engine.registerPlugin(new XCapitalDeletePlugin());
+    engine.registerPlugin(new DeleteOperatorPlugin());
 
     engine.start();
 

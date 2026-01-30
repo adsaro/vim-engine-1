@@ -127,6 +127,11 @@ export class VimState {
   } | null = null;
 
   /**
+   * Pending operator for operator-pending mode (d, c, y, etc.)
+   */
+  private _pendingOperator: string | null = null;
+
+  /**
    * Create a new VimState
    *
    * @param initialContent - Initial text content (string or TextBuffer)
@@ -479,6 +484,7 @@ export class VimState {
     cloned._lastSearchPattern = this._lastSearchPattern;
     cloned._searchForward = this._searchForward;
     cloned._lastCharSearch = this._lastCharSearch ? { ...this._lastCharSearch } : null;
+    cloned._pendingOperator = this._pendingOperator;
 
     return cloned;
   }
@@ -512,6 +518,7 @@ export class VimState {
     this._lastSearchPattern = '';
     this._searchForward = true;
     this._lastCharSearch = null;
+    this._pendingOperator = null;
   }
 
   /**
@@ -540,5 +547,37 @@ export class VimState {
    */
   setLastCharSearch(charSearch: { char: string; direction: 'forward' | 'backward'; type: 'find' | 'till' } | null): void {
     this._lastCharSearch = charSearch;
+  }
+
+  /**
+   * Get the pending operator
+   *
+   * @returns {string | null} The pending operator character or null
+   *
+   * @example
+   * ```typescript
+   * const op = state.getPendingOperator();
+   * if (op === 'd') {
+   *   // Handle delete operator
+   * }
+   * ```
+   */
+  getPendingOperator(): string | null {
+    return this._pendingOperator;
+  }
+
+  /**
+   * Set the pending operator
+   *
+   * @param operator - The operator character (d, c, y, etc.) or null to clear
+   *
+   * @example
+   * ```typescript
+   * state.setPendingOperator('d'); // Set delete operator
+   * state.setPendingOperator(null); // Clear pending operator
+   * ```
+   */
+  setPendingOperator(operator: string | null): void {
+    this._pendingOperator = operator;
   }
 }
