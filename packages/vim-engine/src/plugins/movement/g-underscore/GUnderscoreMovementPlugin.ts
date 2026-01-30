@@ -46,7 +46,7 @@ export class GUnderscoreMovementPlugin extends LineMovementPlugin {
   readonly version = '1.0.0';
   readonly description = 'Move to last non-blank character (g_ key)';
   readonly patterns = ['g_'];
-  readonly modes: VimMode[] = [VIM_MODE.NORMAL, VIM_MODE.VISUAL];
+  readonly modes: VimMode[] = [VIM_MODE.NORMAL, VIM_MODE.VISUAL, VIM_MODE.OPERATOR_PENDING];
 
   /**
    * Create a new GUnderscoreMovementPlugin

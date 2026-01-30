@@ -29,10 +29,10 @@ export class SemicolonMovementPlugin extends AbstractVimPlugin {
   readonly version = '1.0.0';
   readonly description = 'Repeat last character search (;)';
   readonly patterns = [';'];
-  readonly modes: VimMode[] = [VIM_MODE.NORMAL, VIM_MODE.VISUAL];
+  readonly modes: VimMode[] = [VIM_MODE.NORMAL, VIM_MODE.VISUAL, VIM_MODE.OPERATOR_PENDING];
 
   constructor() {
-    super('movement-semicolon', 'Repeat last character search (;)', [';'], [VIM_MODE.NORMAL, VIM_MODE.VISUAL]);
+    super('movement-semicolon', 'Repeat last character search (;)', [';'], [VIM_MODE.NORMAL, VIM_MODE.VISUAL, VIM_MODE.OPERATOR_PENDING]);
   }
 
   /**

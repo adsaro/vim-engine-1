@@ -51,7 +51,7 @@ export class JMovementPlugin extends DirectionalMovementPlugin {
   /**
    * Modes this plugin is active in
    */
-  readonly modes: VimMode[] = [VIM_MODE.NORMAL, VIM_MODE.VISUAL];
+  readonly modes: VimMode[] = [VIM_MODE.NORMAL, VIM_MODE.VISUAL, VIM_MODE.OPERATOR_PENDING];
 
   /**
    * Create a new JMovementPlugin
@@ -63,7 +63,7 @@ export class JMovementPlugin extends DirectionalMovementPlugin {
       'movement-j',
       'Move cursor down (j key)',
       'j',
-      [VIM_MODE.NORMAL, VIM_MODE.VISUAL],
+      [VIM_MODE.NORMAL, VIM_MODE.VISUAL, VIM_MODE.OPERATOR_PENDING],
       config
     );
   }

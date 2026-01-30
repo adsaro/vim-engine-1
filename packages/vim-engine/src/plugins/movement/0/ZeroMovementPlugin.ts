@@ -45,7 +45,7 @@ export class ZeroMovementPlugin extends LineMovementPlugin {
   readonly version = '1.0.0';
   readonly description = 'Move to start of line (0 key)';
   readonly patterns = ['0'];
-  readonly modes: VimMode[] = [VIM_MODE.NORMAL, VIM_MODE.VISUAL];
+  readonly modes: VimMode[] = [VIM_MODE.NORMAL, VIM_MODE.VISUAL, VIM_MODE.OPERATOR_PENDING];
 
   /**
    * Create a new ZeroMovementPlugin

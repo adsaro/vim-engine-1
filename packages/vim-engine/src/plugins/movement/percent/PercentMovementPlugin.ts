@@ -51,7 +51,7 @@ export class PercentMovementPlugin extends MovementPlugin {
   readonly version = '1.0.0';
   readonly description = 'Jump to matching bracket (% key)';
   readonly patterns = ['%'];
-  readonly modes: VimMode[] = [VIM_MODE.NORMAL, VIM_MODE.VISUAL];
+  readonly modes: VimMode[] = [VIM_MODE.NORMAL, VIM_MODE.VISUAL, VIM_MODE.OPERATOR_PENDING];
 
   /**
    * Create a new PercentMovementPlugin

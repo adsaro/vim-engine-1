@@ -51,7 +51,7 @@ export class EMovementPlugin extends WordMovementPlugin {
   /**
    * Modes this plugin is active in
    */
-  readonly modes: VimMode[] = [VIM_MODE.NORMAL, VIM_MODE.VISUAL];
+  readonly modes: VimMode[] = [VIM_MODE.NORMAL, VIM_MODE.VISUAL, VIM_MODE.OPERATOR_PENDING];
 
   /**
    * Create a new EMovementPlugin instance
@@ -63,7 +63,7 @@ export class EMovementPlugin extends WordMovementPlugin {
       'movement-e',
       'Move cursor to end of current/next word (e key)',
       'e',
-      [VIM_MODE.NORMAL, VIM_MODE.VISUAL],
+      [VIM_MODE.NORMAL, VIM_MODE.VISUAL, VIM_MODE.OPERATOR_PENDING],
       config
     );
   }
