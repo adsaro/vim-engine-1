@@ -32,7 +32,7 @@ export class FForwardMovementPlugin extends AbstractVimPlugin {
   readonly version = '1.0.0';
   readonly description = 'Find character forward (f{char})';
   readonly patterns: string[];
-  readonly modes: VimMode[] = [VIM_MODE.NORMAL, VIM_MODE.VISUAL];
+  readonly modes: VimMode[] = [VIM_MODE.NORMAL, VIM_MODE.VISUAL, VIM_MODE.OPERATOR_PENDING];
 
   /**
    * Create a new FForwardMovementPlugin

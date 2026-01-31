@@ -16,7 +16,7 @@
  *   readonly version = '1.0.0';
  *   readonly description = 'Move cursor left (h key)';
  *   readonly patterns = ['h'];
- *   readonly modes: VimMode[] = [VIM_MODE.NORMAL, VIM_MODE.VISUAL];
+ *   readonly modes: VimMode[] = [VIM_MODE.NORMAL, VIM_MODE.VISUAL, VIM_MODE.OPERATOR_PENDING];
  *
  *   protected applyMovement(cursor: CursorPosition, line: string, step: number): CursorPosition {
  *     const newColumn = Math.max(0, cursor.column - step);

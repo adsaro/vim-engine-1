@@ -40,6 +40,12 @@ import {
   TBackwardMovementPlugin,
   SemicolonMovementPlugin,
   CommaMovementPlugin,
+  XDeletePlugin,
+  XCapitalDeletePlugin,
+  DCapitalDeletePlugin,
+  DeleteOperatorPlugin,
+  InsideWordTextObject,
+  ReplaceCharacterPlugin,
 } from '@vim-engine/core';
 
 interface VimContextType {
@@ -136,6 +142,18 @@ export function VimProvider({ children, initialContent = '' }: VimProviderProps)
     // Register repeat plugins
     engine.registerPlugin(new SemicolonMovementPlugin());
     engine.registerPlugin(new CommaMovementPlugin());
+
+    // Register operator plugins
+    engine.registerPlugin(new XDeletePlugin());
+    engine.registerPlugin(new XCapitalDeletePlugin());
+    engine.registerPlugin(new DCapitalDeletePlugin());
+    engine.registerPlugin(new DeleteOperatorPlugin());
+
+    // Register replace character plugin
+    engine.registerPlugin(new ReplaceCharacterPlugin());
+
+    // Register text object plugins
+    engine.registerPlugin(new InsideWordTextObject());
 
     engine.start();
 

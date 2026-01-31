@@ -49,7 +49,7 @@ export class HMovementPlugin extends DirectionalMovementPlugin {
   /**
    * Modes this plugin is active in
    */
-  readonly modes: VimMode[] = [VIM_MODE.NORMAL, VIM_MODE.VISUAL];
+  readonly modes: VimMode[] = [VIM_MODE.NORMAL, VIM_MODE.VISUAL, VIM_MODE.OPERATOR_PENDING];
 
   /**
    * Create a new HMovementPlugin
@@ -61,7 +61,7 @@ export class HMovementPlugin extends DirectionalMovementPlugin {
       'movement-h',
       'Move cursor left (h key)',
       'h',
-      [VIM_MODE.NORMAL, VIM_MODE.VISUAL],
+      [VIM_MODE.NORMAL, VIM_MODE.VISUAL, VIM_MODE.OPERATOR_PENDING],
       config
     );
   }

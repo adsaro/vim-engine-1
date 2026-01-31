@@ -41,7 +41,7 @@
 import { VimPlugin } from '../plugin/VimPlugin';
 import { PluginRegistry } from '../plugin/PluginRegistry';
 import { ExecutionContext } from '../plugin/ExecutionContext';
-import { VimMode, VimState } from '../state';
+import { VimMode, VimState, VIM_MODE } from '../state';
 import { CursorPosition } from '../state/CursorPosition';
 import { TextBuffer } from '../state/TextBuffer';
 import { CommandRouter } from './CommandRouter';
@@ -536,10 +536,138 @@ export class VimExecutor {
   private executeCommand(command: string): void {
     // Set the current pattern in the execution context before executing
     this.executionContext.setCurrentPattern(command);
-    this.commandRouter.executeSync(command, this.executionContext);
+
+    // Check if we're in operator-pending mode
+    if (this.executionContext.getMode() === VIM_MODE.OPERATOR_PENDING) {
+      this.handleOperatorPendingCommand(command);
+    } else {
+      this.commandRouter.executeSync(command, this.executionContext);
+    }
+
     this.keystrokeCount++;
     this.executionContext.setCount(0);
     this.clearKeystrokeBuffer();
+  }
+
+  /**
+   * Handle command when in operator-pending mode
+   *
+   * Executes the motion and then applies the pending operator.
+   *
+   * @param command - The motion command or text object prefix
+   */
+  private handleOperatorPendingCommand(command: string): void {
+    const pendingOperator = this.executionContext.getState().getPendingOperator();
+    if (!pendingOperator) {
+      // No pending operator, just execute the motion
+      this.commandRouter.executeSync(command, this.executionContext);
+      return;
+    }
+
+    // Check if this is a double-operator (e.g., dd, cc, yy)
+    // When the same key is pressed twice, it should apply to the current line
+    if (command === pendingOperator) {
+      // Get the operator plugin
+      const operatorPlugin = this.commandRouter.matchPattern(pendingOperator);
+      if (operatorPlugin && 'deleteLine' in operatorPlugin) {
+        // Call the deleteLine method directly
+        (operatorPlugin as { deleteLine: (context: ExecutionContext) => void })
+          .deleteLine(this.executionContext);
+      }
+
+      // Return to normal mode
+      this.executionContext.setMode(VIM_MODE.NORMAL);
+      this.executionContext.getState().setPendingOperator(null);
+      return;
+    }
+
+    // Check if this is a text object (e.g., "iw", "aw")
+    // Text objects are two-character patterns starting with 'i' or 'a'
+    if (command.length === 2 && (command[0] === 'i' || command[0] === 'a')) {
+      this.handleTextObject(command, pendingOperator);
+      return;
+    }
+
+    // Get the motion plugin
+    const motionPlugin = this.commandRouter.matchPattern(command);
+    if (!motionPlugin) {
+      // Unknown motion, cancel operator-pending mode
+      this.executionContext.setMode(VIM_MODE.NORMAL);
+      this.executionContext.getState().setPendingOperator(null);
+      return;
+    }
+
+    // Save current position
+    const startPosition = this.executionContext.getCursor().clone();
+
+    // Get the pending count for the motion (default to 1)
+    const pendingCount = this.executionContext.getState().getPendingCount();
+    this.executionContext.setCount(pendingCount);
+
+    // Execute the motion to get to the target position
+    this.commandRouter.executeSync(command, this.executionContext);
+
+    // Get the target position
+    const endPosition = this.executionContext.getCursor().clone();
+
+    // Restore start position
+    this.executionContext.setCursor(startPosition);
+
+    // Get the operator plugin
+    const operatorPlugin = this.commandRouter.matchPattern(pendingOperator);
+    if (operatorPlugin && 'executeDeleteWithMotion' in operatorPlugin) {
+      // Determine if motion is inclusive based on command type
+      // Inclusive motions: $ (end of line), % (matching bracket), etc.
+      // Exclusive motions: w, b, e, h, j, k, l, etc.
+      const inclusiveMotions = ['$'];
+      const isInclusive = inclusiveMotions.includes(command);
+      
+      // Execute the operator with the motion range
+      (operatorPlugin as { executeDeleteWithMotion: (context: ExecutionContext, from: CursorPosition, to: CursorPosition, inclusive?: boolean) => void })
+        .executeDeleteWithMotion(this.executionContext, startPosition, endPosition, isInclusive);
+    }
+
+    // Return to normal mode
+    this.executionContext.setMode(VIM_MODE.NORMAL);
+    this.executionContext.getState().setPendingOperator(null);
+  }
+
+  /**
+   * Handle a text object command
+   *
+   * @param textObject - The text object pattern (e.g., "iw", "aw")
+   * @param pendingOperator - The pending operator (e.g., "d", "c", "y")
+   */
+  private handleTextObject(textObject: string, pendingOperator: string): void {
+    // Get the text object plugin
+    const textObjectPlugin = this.commandRouter.matchPattern(textObject);
+    if (!textObjectPlugin || !('getWordBoundaries' in textObjectPlugin)) {
+      // Unknown text object, cancel operator-pending mode
+      this.executionContext.setMode(VIM_MODE.NORMAL);
+      this.executionContext.getState().setPendingOperator(null);
+      this.executionContext.getState().setPendingTextObjectPrefix(null);
+      return;
+    }
+
+    // Get the word boundaries from the text object
+    const boundaries = (textObjectPlugin as { getWordBoundaries: (context: ExecutionContext) => { start: CursorPosition; end: CursorPosition } | null })
+      .getWordBoundaries(this.executionContext);
+
+    if (boundaries) {
+      // Get the operator plugin
+      const operatorPlugin = this.commandRouter.matchPattern(pendingOperator);
+      if (operatorPlugin && 'executeDeleteWithMotion' in operatorPlugin) {
+        // Execute the operator with the text object range
+        // Text objects return exclusive end positions (already correct)
+        (operatorPlugin as { executeDeleteWithMotion: (context: ExecutionContext, from: CursorPosition, to: CursorPosition, inclusive?: boolean) => void })
+          .executeDeleteWithMotion(this.executionContext, boundaries.start, boundaries.end, false);
+      }
+    }
+
+    // Return to normal mode and clear pending states
+    this.executionContext.setMode(VIM_MODE.NORMAL);
+    this.executionContext.getState().setPendingOperator(null);
+    this.executionContext.getState().setPendingTextObjectPrefix(null);
   }
 
   /**

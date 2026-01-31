@@ -17,7 +17,7 @@
  *   readonly version = '1.0.0';
  *   readonly description = 'Move cursor to start of next word (w key)';
  *   readonly patterns = ['w'];
- *   readonly modes: VimMode[] = [VIM_MODE.NORMAL, VIM_MODE.VISUAL];
+ *   readonly modes: VimMode[] = [VIM_MODE.NORMAL, VIM_MODE.VISUAL, VIM_MODE.OPERATOR_PENDING];
  *
  *   protected get direction(): 'forward' | 'backward' {
  *     return 'forward';
@@ -34,6 +34,7 @@
 import { MovementPlugin, MovementConfig } from './MovementPlugin';
 import { CursorPosition } from '../../../state/CursorPosition';
 import { TextBuffer } from '../../../state/TextBuffer';
+import { ExecutionContext } from '../../../plugin/ExecutionContext';
 
 /**
  * WordMovementPlugin - Abstract base for word-based movements
@@ -43,6 +44,41 @@ import { TextBuffer } from '../../../state/TextBuffer';
  * strategies for different word movement types.
  */
 export abstract class WordMovementPlugin extends MovementPlugin {
+  /**
+   * Perform the movement action with count support
+   *
+   * Executes the word movement count times.
+   *
+   * @param context - The execution context
+   */
+  protected performAction(context: ExecutionContext): void {
+    const cursor = context.getCursor();
+    const buffer = context.getBuffer();
+    const count = context.getCount() || 1;
+
+    if (buffer.isEmpty()) {
+      return;
+    }
+
+    let currentPosition = cursor.clone();
+
+    // Execute movement count times
+    for (let i = 0; i < count; i++) {
+      const newPosition = this.calculateNewPosition(currentPosition, buffer, this.config);
+      
+      if (newPosition.line === currentPosition.line && newPosition.column === currentPosition.column) {
+        // No movement possible, stop
+        break;
+      }
+      
+      currentPosition = newPosition;
+    }
+
+    if (this.validateMove(currentPosition, buffer)) {
+      context.setCursor(currentPosition);
+    }
+  }
+
   /**
    * Calculate new cursor position using word boundary traversal
    *
