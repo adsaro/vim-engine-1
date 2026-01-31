@@ -21,6 +21,7 @@ import {
   StarMovementPlugin,
   XDeletePlugin,
   ReplaceCharacterPlugin,
+  InsertModePlugin,
 } from '@vim-engine/core';
 
 interface UseVimEngineOptions {
@@ -91,6 +92,9 @@ export function useVimEngine(options: UseVimEngineOptions = {}): UseVimEngineRet
 
     // Register replace character plugin
     engine.registerPlugin(new ReplaceCharacterPlugin());
+
+    // Register mode plugins
+    engine.registerPlugin(new InsertModePlugin());
 
     engine.start();
     engineRef.current = engine;

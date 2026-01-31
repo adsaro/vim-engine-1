@@ -410,6 +410,12 @@ export class VimExecutor {
    * ```
    */
   handleKeystroke(keystroke: string): void {
+    // Handle INSERT mode specially
+    if (this.executionContext.getMode() === VIM_MODE.INSERT) {
+      this.handleInsertModeKeystroke(keystroke);
+      return;
+    }
+
     this.keystrokeBuffer.push(keystroke);
     const bufferedKeystrokes = this.keystrokeBuffer.join('');
 
@@ -425,6 +431,101 @@ export class VimExecutor {
 
     // No match - decide whether to keep buffering or clear
     this.handleNoMatch(bufferedKeystrokes, keystroke);
+  }
+
+  /**
+   * Handle a keystroke when in INSERT mode
+   *
+   * In INSERT mode, regular characters are inserted at the cursor position.
+   * Special keys like Escape return to NORMAL mode.
+   *
+   * @param keystroke - The keystroke to handle
+   */
+  private handleInsertModeKeystroke(keystroke: string): void {
+    // Escape key returns to NORMAL mode
+    if (keystroke === '<Esc>') {
+      this.executionContext.setMode(VIM_MODE.NORMAL);
+      return;
+    }
+
+    // Backspace deletes character before cursor
+    if (keystroke === '<BS>') {
+      this.handleInsertModeBackspace();
+      return;
+    }
+
+    // Enter/Return creates a new line
+    if (keystroke === '<Enter>') {
+      this.handleInsertModeEnter();
+      return;
+    }
+
+    // Ignore special keys that don't insert text
+    if (keystroke.startsWith('<') && keystroke.endsWith('>')) {
+      return;
+    }
+
+    // Insert the character at cursor position
+    const buffer = this.executionContext.getBuffer();
+    const cursor = this.executionContext.getCursor();
+
+    buffer.insertCharAt(cursor.line, cursor.column, keystroke);
+
+    // Move cursor forward
+    this.executionContext.setCursor(new CursorPosition(cursor.line, cursor.column + 1));
+  }
+
+  /**
+   * Handle backspace in INSERT mode
+   *
+   * Deletes the character before the cursor, or merges with previous line
+   * if at the beginning of a line.
+   */
+  private handleInsertModeBackspace(): void {
+    const buffer = this.executionContext.getBuffer();
+    const cursor = this.executionContext.getCursor();
+
+    if (cursor.column > 0) {
+      // Delete character before cursor
+      buffer.deleteCharAt(cursor.line, cursor.column - 1);
+      this.executionContext.setCursor(new CursorPosition(cursor.line, cursor.column - 1));
+    } else if (cursor.line > 0) {
+      // At beginning of line - merge with previous line
+      const currentLine = buffer.getLine(cursor.line) || '';
+      const previousLine = buffer.getLine(cursor.line - 1) || '';
+      const previousLineLength = previousLine.length;
+
+      // Merge lines
+      buffer.setLine(cursor.line - 1, previousLine + currentLine);
+      buffer.deleteLine(cursor.line);
+
+      // Move cursor to end of previous line
+      this.executionContext.setCursor(new CursorPosition(cursor.line - 1, previousLineLength));
+    }
+  }
+
+  /**
+   * Handle Enter/Return in INSERT mode
+   *
+   * Splits the current line at the cursor position.
+   */
+  private handleInsertModeEnter(): void {
+    const buffer = this.executionContext.getBuffer();
+    const cursor = this.executionContext.getCursor();
+    const line = buffer.getLine(cursor.line) || '';
+
+    // Split the line at cursor position
+    const beforeCursor = line.slice(0, cursor.column);
+    const afterCursor = line.slice(cursor.column);
+
+    // Update current line with content before cursor
+    buffer.setLine(cursor.line, beforeCursor);
+
+    // Insert new line with content after cursor
+    buffer.insertLine(cursor.line + 1, afterCursor);
+
+    // Move cursor to beginning of new line
+    this.executionContext.setCursor(new CursorPosition(cursor.line + 1, 0));
   }
 
   /**

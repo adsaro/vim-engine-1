@@ -4,6 +4,7 @@
 import { VimExecutor } from './index';
 import { VimPlugin, ExecutionContext, PluginRegistry } from '../plugin/index';
 import { VimMode, VIM_MODE } from '../state/index';
+import { CursorPosition } from '../state/CursorPosition';
 import { vi } from 'vitest';
 
 describe('VimExecutor', () => {
@@ -439,6 +440,145 @@ describe('VimExecutor', () => {
         executor.destroy();
         executor.destroy();
       }).not.toThrow();
+    });
+  });
+
+  describe('Insert Mode', () => {
+    beforeEach(() => {
+      executor.initialize();
+      executor.start();
+    });
+
+    it('should insert characters when in INSERT mode', () => {
+      const state = executor.getState();
+      state.buffer.setContent('Hello');
+      state.cursor = new CursorPosition(0, 0);
+
+      // Enter insert mode
+      executor.setCurrentMode(VIM_MODE.INSERT);
+
+      // Type 'X'
+      executor.handleKeystroke('X');
+
+      expect(state.buffer.getLine(0)).toBe('XHello');
+      expect(state.cursor.column).toBe(1);
+    });
+
+    it('should insert multiple characters in INSERT mode', () => {
+      const state = executor.getState();
+      state.buffer.setContent('Hello');
+      state.cursor = new CursorPosition(0, 5); // End of line
+
+      // Enter insert mode
+      executor.setCurrentMode(VIM_MODE.INSERT);
+
+      // Type ' World'
+      executor.handleKeystroke(' ');
+      executor.handleKeystroke('W');
+      executor.handleKeystroke('o');
+      executor.handleKeystroke('r');
+      executor.handleKeystroke('l');
+      executor.handleKeystroke('d');
+
+      expect(state.buffer.getLine(0)).toBe('Hello World');
+      expect(state.cursor.column).toBe(11);
+    });
+
+    it('should return to NORMAL mode when Escape is pressed', () => {
+      // Enter insert mode
+      executor.setCurrentMode(VIM_MODE.INSERT);
+      expect(executor.getCurrentMode()).toBe(VIM_MODE.INSERT);
+
+      // Press Escape
+      executor.handleKeystroke('<Esc>');
+
+      expect(executor.getCurrentMode()).toBe(VIM_MODE.NORMAL);
+    });
+
+    it('should handle backspace in INSERT mode', () => {
+      const state = executor.getState();
+      state.buffer.setContent('Hello');
+      state.cursor = new CursorPosition(0, 5); // End of line
+
+      // Enter insert mode
+      executor.setCurrentMode(VIM_MODE.INSERT);
+
+      // Press backspace
+      executor.handleKeystroke('<BS>');
+
+      expect(state.buffer.getLine(0)).toBe('Hell');
+      expect(state.cursor.column).toBe(4);
+    });
+
+    it('should handle backspace at beginning of line by merging with previous line', () => {
+      const state = executor.getState();
+      state.buffer.setContent('Hello\nWorld');
+      state.cursor = new CursorPosition(1, 0); // Beginning of second line
+
+      // Enter insert mode
+      executor.setCurrentMode(VIM_MODE.INSERT);
+
+      // Press backspace
+      executor.handleKeystroke('<BS>');
+
+      expect(state.buffer.getLine(0)).toBe('HelloWorld');
+      expect(state.buffer.getLineCount()).toBe(1);
+      expect(state.cursor.line).toBe(0);
+      expect(state.cursor.column).toBe(5);
+    });
+
+    it('should handle Enter key in INSERT mode', () => {
+      const state = executor.getState();
+      state.buffer.setContent('Hello World');
+      state.cursor = new CursorPosition(0, 5); // After "Hello"
+
+      // Enter insert mode
+      executor.setCurrentMode(VIM_MODE.INSERT);
+
+      // Press Enter
+      executor.handleKeystroke('<Enter>');
+
+      expect(state.buffer.getLine(0)).toBe('Hello');
+      expect(state.buffer.getLine(1)).toBe(' World');
+      expect(state.cursor.line).toBe(1);
+      expect(state.cursor.column).toBe(0);
+    });
+
+    it('should ignore special keys in INSERT mode', () => {
+      const state = executor.getState();
+      state.buffer.setContent('Hello');
+      state.cursor = new CursorPosition(0, 0);
+
+      // Enter insert mode
+      executor.setCurrentMode(VIM_MODE.INSERT);
+
+      // These should not throw or modify content
+      executor.handleKeystroke('<Up>');
+      executor.handleKeystroke('<Down>');
+      executor.handleKeystroke('<Left>');
+      executor.handleKeystroke('<Right>');
+
+      expect(state.buffer.getLine(0)).toBe('Hello');
+      expect(state.cursor.column).toBe(0);
+    });
+
+    it('should not process normal mode commands while in INSERT mode', () => {
+      // Register a mock plugin for 'x' command
+      const mockPlugin = createMockPlugin('delete', ['x']);
+      executor.registerPlugin(mockPlugin);
+
+      const state = executor.getState();
+      state.buffer.setContent('Hello');
+      state.cursor = new CursorPosition(0, 0);
+
+      // Enter insert mode
+      executor.setCurrentMode(VIM_MODE.INSERT);
+
+      // Type 'x' - should insert, not delete
+      executor.handleKeystroke('x');
+
+      expect(state.buffer.getLine(0)).toBe('xHello');
+      expect(mockPlugin.execute).not.toHaveBeenCalled();
     });
   });
 });
