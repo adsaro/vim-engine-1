@@ -36,7 +36,7 @@
  * - SELECT: Mode for selecting text (similar to VISUAL but with different behavior)
  * - SEARCH: Mode for entering search patterns with /
  */
-export type VimMode = 'NORMAL' | 'INSERT' | 'VISUAL' | 'COMMAND' | 'REPLACE' | 'SELECT' | 'SEARCH';
+export type VimMode = 'NORMAL' | 'INSERT' | 'VISUAL' | 'COMMAND' | 'REPLACE' | 'SELECT' | 'SEARCH' | 'OPERATOR_PENDING';
 
 /**
  * Runtime constant object with all vim modes
@@ -85,6 +85,11 @@ export const VIM_MODE = {
    * Search mode - for entering search patterns with /
    */
   SEARCH: 'SEARCH' as VimMode,
+
+  /**
+   * Operator pending mode - waiting for motion after operator (d, c, y)
+   */
+  OPERATOR_PENDING: 'OPERATOR_PENDING' as VimMode,
 } as const;
 
 /**

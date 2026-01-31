@@ -51,7 +51,7 @@ export class GeMovementPlugin extends WordMovementPlugin {
   /**
    * Modes this plugin is active in
    */
-  readonly modes: VimMode[] = [VIM_MODE.NORMAL, VIM_MODE.VISUAL];
+  readonly modes: VimMode[] = [VIM_MODE.NORMAL, VIM_MODE.VISUAL, VIM_MODE.OPERATOR_PENDING];
 
   /**
    * Create a new GeMovementPlugin instance
@@ -63,7 +63,7 @@ export class GeMovementPlugin extends WordMovementPlugin {
       'movement-ge',
       'Move cursor to end of previous word (ge key)',
       'ge',
-      [VIM_MODE.NORMAL, VIM_MODE.VISUAL],
+      [VIM_MODE.NORMAL, VIM_MODE.VISUAL, VIM_MODE.OPERATOR_PENDING],
       config
     );
   }

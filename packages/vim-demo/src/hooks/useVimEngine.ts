@@ -19,6 +19,8 @@ import {
   NCapitalMovementPlugin,
   HashMovementPlugin,
   StarMovementPlugin,
+  XDeletePlugin,
+  ReplaceCharacterPlugin,
 } from '@vim-engine/core';
 
 interface UseVimEngineOptions {
@@ -83,6 +85,12 @@ export function useVimEngine(options: UseVimEngineOptions = {}): UseVimEngineRet
     // Register * movement plugin for searching word under cursor
     engine.registerPlugin(new HashMovementPlugin());
     engine.registerPlugin(new StarMovementPlugin());
+
+    // Register operator plugins
+    engine.registerPlugin(new XDeletePlugin());
+
+    // Register replace character plugin
+    engine.registerPlugin(new ReplaceCharacterPlugin());
 
     engine.start();
     engineRef.current = engine;
@@ -156,6 +164,7 @@ export function useVimEngine(options: UseVimEngineOptions = {}): UseVimEngineRet
         'x',
         'X',
         'u',
+        'r',
       ];
 
       const key = event.key.toLowerCase();

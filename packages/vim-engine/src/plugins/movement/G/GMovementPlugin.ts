@@ -79,7 +79,7 @@ export class GMovementPlugin extends DocumentNavigationPlugin {
   /**
    * Modes this plugin is active in
    */
-  readonly modes: VimMode[] = [VIM_MODE.NORMAL, VIM_MODE.VISUAL];
+  readonly modes: VimMode[] = [VIM_MODE.NORMAL, VIM_MODE.VISUAL, VIM_MODE.OPERATOR_PENDING];
 
   /**
    * Create a new GMovementPlugin
@@ -91,7 +91,7 @@ export class GMovementPlugin extends DocumentNavigationPlugin {
       'movement-G',
       'Jump to last line or specific line with count prefix',
       'G',
-      [VIM_MODE.NORMAL, VIM_MODE.VISUAL],
+      [VIM_MODE.NORMAL, VIM_MODE.VISUAL, VIM_MODE.OPERATOR_PENDING],
       config
     );
     // Override default step to -1 to represent "no count"
