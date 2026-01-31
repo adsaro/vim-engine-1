@@ -46,6 +46,7 @@ import {
   DeleteOperatorPlugin,
   InsideWordTextObject,
   ReplaceCharacterPlugin,
+  InsertModePlugin,
 } from '@vim-engine/core';
 
 interface VimContextType {
@@ -149,11 +150,14 @@ export function VimProvider({ children, initialContent = '' }: VimProviderProps)
     engine.registerPlugin(new DCapitalDeletePlugin());
     engine.registerPlugin(new DeleteOperatorPlugin());
 
+    // Register text object plugins
+    engine.registerPlugin(new InsideWordTextObject());
+
     // Register replace character plugin
     engine.registerPlugin(new ReplaceCharacterPlugin());
 
-    // Register text object plugins
-    engine.registerPlugin(new InsideWordTextObject());
+    // Register mode plugins
+    engine.registerPlugin(new InsertModePlugin());
 
     engine.start();
 
