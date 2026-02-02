@@ -6,3 +6,4 @@ export * from './X-capital';
 export * from './D-capital';
 export * from './delete';
 export * from './r';
+export * from './change';

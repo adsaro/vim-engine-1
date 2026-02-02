@@ -670,14 +670,22 @@ export class VimExecutor {
     if (command === pendingOperator) {
       // Get the operator plugin
       const operatorPlugin = this.commandRouter.matchPattern(pendingOperator);
-      if (operatorPlugin && 'deleteLine' in operatorPlugin) {
-        // Call the deleteLine method directly
-        (operatorPlugin as { deleteLine: (context: ExecutionContext) => void })
-          .deleteLine(this.executionContext);
+      if (operatorPlugin) {
+        if ('deleteLine' in operatorPlugin) {
+          // Call the deleteLine method directly
+          (operatorPlugin as { deleteLine: (context: ExecutionContext) => void })
+            .deleteLine(this.executionContext);
+        } else if ('changeLine' in operatorPlugin) {
+          // Call the changeLine method directly
+          (operatorPlugin as { changeLine: (context: ExecutionContext) => void })
+            .changeLine(this.executionContext);
+        }
       }
 
-      // Return to normal mode
-      this.executionContext.setMode(VIM_MODE.NORMAL);
+      // Return to normal mode (for delete) or stay in insert mode (for change)
+      if (pendingOperator !== 'c') {
+        this.executionContext.setMode(VIM_MODE.NORMAL);
+      }
       this.executionContext.getState().setPendingOperator(null);
       return;
     }
@@ -716,20 +724,28 @@ export class VimExecutor {
 
     // Get the operator plugin
     const operatorPlugin = this.commandRouter.matchPattern(pendingOperator);
-    if (operatorPlugin && 'executeDeleteWithMotion' in operatorPlugin) {
+    if (operatorPlugin) {
       // Determine if motion is inclusive based on command type
       // Inclusive motions: $ (end of line), % (matching bracket), etc.
       // Exclusive motions: w, b, e, h, j, k, l, etc.
       const inclusiveMotions = ['$'];
       const isInclusive = inclusiveMotions.includes(command);
-      
-      // Execute the operator with the motion range
-      (operatorPlugin as { executeDeleteWithMotion: (context: ExecutionContext, from: CursorPosition, to: CursorPosition, inclusive?: boolean) => void })
-        .executeDeleteWithMotion(this.executionContext, startPosition, endPosition, isInclusive);
+
+      if ('executeDeleteWithMotion' in operatorPlugin) {
+        // Execute the delete operator with the motion range
+        (operatorPlugin as { executeDeleteWithMotion: (context: ExecutionContext, from: CursorPosition, to: CursorPosition, inclusive?: boolean) => void })
+          .executeDeleteWithMotion(this.executionContext, startPosition, endPosition, isInclusive);
+      } else if ('executeChangeWithMotion' in operatorPlugin) {
+        // Execute the change operator with the motion range
+        (operatorPlugin as { executeChangeWithMotion: (context: ExecutionContext, from: CursorPosition, to: CursorPosition, inclusive?: boolean) => void })
+          .executeChangeWithMotion(this.executionContext, startPosition, endPosition, isInclusive);
+      }
     }
 
-    // Return to normal mode
-    this.executionContext.setMode(VIM_MODE.NORMAL);
+    // Return to normal mode (for delete) or stay in insert mode (for change)
+    if (pendingOperator !== 'c') {
+      this.executionContext.setMode(VIM_MODE.NORMAL);
+    }
     this.executionContext.getState().setPendingOperator(null);
   }
 
@@ -757,16 +773,24 @@ export class VimExecutor {
     if (boundaries) {
       // Get the operator plugin
       const operatorPlugin = this.commandRouter.matchPattern(pendingOperator);
-      if (operatorPlugin && 'executeDeleteWithMotion' in operatorPlugin) {
-        // Execute the operator with the text object range
-        // Text objects return exclusive end positions (already correct)
-        (operatorPlugin as { executeDeleteWithMotion: (context: ExecutionContext, from: CursorPosition, to: CursorPosition, inclusive?: boolean) => void })
-          .executeDeleteWithMotion(this.executionContext, boundaries.start, boundaries.end, false);
+      if (operatorPlugin) {
+        if ('executeDeleteWithMotion' in operatorPlugin) {
+          // Execute the delete operator with the text object range
+          // Text objects return exclusive end positions (already correct)
+          (operatorPlugin as { executeDeleteWithMotion: (context: ExecutionContext, from: CursorPosition, to: CursorPosition, inclusive?: boolean) => void })
+            .executeDeleteWithMotion(this.executionContext, boundaries.start, boundaries.end, false);
+        } else if ('executeChangeWithMotion' in operatorPlugin) {
+          // Execute the change operator with the text object range
+          (operatorPlugin as { executeChangeWithMotion: (context: ExecutionContext, from: CursorPosition, to: CursorPosition, inclusive?: boolean) => void })
+            .executeChangeWithMotion(this.executionContext, boundaries.start, boundaries.end, false);
+        }
       }
     }
 
-    // Return to normal mode and clear pending states
-    this.executionContext.setMode(VIM_MODE.NORMAL);
+    // Return to normal mode (for delete) or stay in insert mode (for change) and clear pending states
+    if (pendingOperator !== 'c') {
+      this.executionContext.setMode(VIM_MODE.NORMAL);
+    }
     this.executionContext.getState().setPendingOperator(null);
     this.executionContext.getState().setPendingTextObjectPrefix(null);
   }
