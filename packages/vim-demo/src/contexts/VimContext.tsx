@@ -45,6 +45,7 @@ import {
   DCapitalDeletePlugin,
   DeleteOperatorPlugin,
   InsideWordTextObject,
+  InsideQuoteTextObject,
   ReplaceCharacterPlugin,
   InsertModePlugin,
   ChangeOperatorPlugin,
@@ -153,6 +154,7 @@ export function VimProvider({ children, initialContent = '' }: VimProviderProps)
 
     // Register text object plugins
     engine.registerPlugin(new InsideWordTextObject());
+    engine.registerPlugin(new InsideQuoteTextObject());
 
     // Register replace character plugin
     engine.registerPlugin(new ReplaceCharacterPlugin());

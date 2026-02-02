@@ -535,11 +535,6 @@ export class VimExecutor {
    * @returns {boolean} True if matched and executed, false otherwise
    */
   private tryMatchNumericPrefix(bufferedKeystrokes: string): boolean {
-    // Skip if buffer is just digits - continue to normal matching
-    if (this.isAllDigits(bufferedKeystrokes)) {
-      return false;
-    }
-
     const numericMatch = bufferedKeystrokes.match(/^(\d+)(.+)$/);
     if (!numericMatch) {
       return false;
@@ -551,7 +546,7 @@ export class VimExecutor {
     this.executionContext.setCount(count);
 
     const matchedPlugin = this.commandRouter.matchPattern(command);
-    if (matchedPlugin) {
+    if (matchedPlugin && this.isPluginValidForMode(matchedPlugin)) {
       this.executeCommand(command);
       return true;
     }
@@ -559,6 +554,10 @@ export class VimExecutor {
     // Reset count since command didn't match
     this.executionContext.setCount(0);
     return false;
+  }
+
+  private isPluginValidForMode(plugin: VimPlugin): boolean {
+    return plugin.modes.includes(this.executionContext.getMode());
   }
 
   /**
@@ -571,6 +570,11 @@ export class VimExecutor {
     const matchedPlugin = this.commandRouter.matchPattern(bufferedKeystrokes);
 
     if (matchedPlugin) {
+      // Check if the plugin is valid for the current mode
+      if (!this.isPluginValidForMode(matchedPlugin)) {
+        return false;
+      }
+
       this.executeCommand(bufferedKeystrokes);
       return true;
     }
@@ -603,16 +607,21 @@ export class VimExecutor {
    */
   private shouldKeepBuffering(bufferedKeystrokes: string): boolean {
     // Check if buffer could be a prefix of a valid command
-    const couldBePrefix = this.commandRouter
+    // Only consider patterns that are valid for the current mode
+    return this.commandRouter
       .getAllPatterns()
-      .some((pattern) => pattern.startsWith(bufferedKeystrokes));
+      .some((pattern) => {
+        // Check if pattern starts with buffer
+        if (!pattern.startsWith(bufferedKeystrokes)) {
+          return false;
+        }
 
-    // Keep buffering if it's a prefix, all digits, or has numeric prefix
-    return (
-      couldBePrefix ||
+        // Check if the plugin for this pattern is valid for the current mode
+        const plugin = this.commandRouter.getPluginForPattern(pattern);
+        return plugin && this.isPluginValidForMode(plugin);
+      }) ||
       this.isAllDigits(bufferedKeystrokes) ||
-      this.hasNumericPrefix(bufferedKeystrokes)
-    );
+      this.hasNumericPrefix(bufferedKeystrokes);
   }
 
   /**
@@ -623,7 +632,7 @@ export class VimExecutor {
    */
   private tryExecuteLastKeystroke(keystroke: string): void {
     const matchedPlugin = this.commandRouter.matchPattern(keystroke);
-    if (matchedPlugin) {
+    if (matchedPlugin && this.isPluginValidForMode(matchedPlugin)) {
       this.executeCommand(keystroke);
     }
   }

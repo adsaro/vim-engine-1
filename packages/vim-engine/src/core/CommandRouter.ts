@@ -184,7 +184,7 @@ export class CommandRouter {
 
     // Check if keystrokes match any registered pattern prefix
     for (const [pattern, plugin] of this.patternToPlugin) {
-      if (keystrokes.startsWith(pattern)) {
+      if (pattern.startsWith(keystrokes)) {
         return plugin;
       }
     }
