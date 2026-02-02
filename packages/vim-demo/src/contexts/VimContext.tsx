@@ -47,6 +47,7 @@ import {
   InsideWordTextObject,
   ReplaceCharacterPlugin,
   InsertModePlugin,
+  ChangeOperatorPlugin,
 } from '@vim-engine/core';
 
 interface VimContextType {
@@ -158,6 +159,9 @@ export function VimProvider({ children, initialContent = '' }: VimProviderProps)
 
     // Register mode plugins
     engine.registerPlugin(new InsertModePlugin());
+
+    // Register change operator plugin
+    engine.registerPlugin(new ChangeOperatorPlugin());
 
     engine.start();
 

@@ -22,6 +22,7 @@ import {
   XDeletePlugin,
   ReplaceCharacterPlugin,
   InsertModePlugin,
+  ChangeOperatorPlugin,
 } from '@vim-engine/core';
 
 interface UseVimEngineOptions {
@@ -95,6 +96,9 @@ export function useVimEngine(options: UseVimEngineOptions = {}): UseVimEngineRet
 
     // Register mode plugins
     engine.registerPlugin(new InsertModePlugin());
+
+    // Register change operator plugin
+    engine.registerPlugin(new ChangeOperatorPlugin());
 
     engine.start();
     engineRef.current = engine;
