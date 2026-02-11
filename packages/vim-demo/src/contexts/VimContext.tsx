@@ -48,6 +48,7 @@ import {
   InsideQuoteTextObject,
   InsideCurlyBraceTextObject,
   InsideParenTextObject,
+  InsideSquareBracketTextObject,
   ReplaceCharacterPlugin,
   InsertModePlugin,
   ChangeOperatorPlugin,
@@ -159,6 +160,7 @@ export function VimProvider({ children, initialContent = '' }: VimProviderProps)
     engine.registerPlugin(new InsideQuoteTextObject());
     engine.registerPlugin(new InsideCurlyBraceTextObject());
     engine.registerPlugin(new InsideParenTextObject());
+    engine.registerPlugin(new InsideSquareBracketTextObject());
 
     // Register replace character plugin
     engine.registerPlugin(new ReplaceCharacterPlugin());
