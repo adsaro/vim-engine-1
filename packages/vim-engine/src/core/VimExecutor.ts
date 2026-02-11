@@ -575,6 +575,12 @@ export class VimExecutor {
         return false;
       }
 
+      // Check if the plugin actually validates this exact pattern
+      // (not just a prefix match - e.g., 'i' shouldn't match 'i{')
+      if (!matchedPlugin.validatePattern(bufferedKeystrokes)) {
+        return false;
+      }
+
       this.executeCommand(bufferedKeystrokes);
       return true;
     }
