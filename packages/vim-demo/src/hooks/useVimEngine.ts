@@ -23,6 +23,7 @@ import {
   ReplaceCharacterPlugin,
   InsertModePlugin,
   ChangeOperatorPlugin,
+  InsideParenTextObject,
 } from '@vim-engine/core';
 
 interface UseVimEngineOptions {
@@ -99,6 +100,9 @@ export function useVimEngine(options: UseVimEngineOptions = {}): UseVimEngineRet
 
     // Register change operator plugin
     engine.registerPlugin(new ChangeOperatorPlugin());
+
+    // Register text object plugins
+    engine.registerPlugin(new InsideParenTextObject());
 
     engine.start();
     engineRef.current = engine;
