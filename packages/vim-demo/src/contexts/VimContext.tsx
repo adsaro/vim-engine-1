@@ -50,8 +50,11 @@ import {
   InsideCurlyBraceTextObject,
   AroundCurlyBraceTextObject,
   InsideParenTextObject,
+  AroundParenTextObject,
   InsideSquareBracketTextObject,
+  AroundSquareBracketTextObject,
   InsideAngleBracketTextObject,
+  AroundAngleBracketTextObject,
   ReplaceCharacterPlugin,
   InsertModePlugin,
   ChangeOperatorPlugin,
@@ -165,8 +168,11 @@ export function VimProvider({ children, initialContent = '' }: VimProviderProps)
     engine.registerPlugin(new InsideCurlyBraceTextObject());
     engine.registerPlugin(new AroundCurlyBraceTextObject());
     engine.registerPlugin(new InsideParenTextObject());
+    engine.registerPlugin(new AroundParenTextObject());
     engine.registerPlugin(new InsideSquareBracketTextObject());
+    engine.registerPlugin(new AroundSquareBracketTextObject());
     engine.registerPlugin(new InsideAngleBracketTextObject());
+    engine.registerPlugin(new AroundAngleBracketTextObject());
 
     // Register replace character plugin
     engine.registerPlugin(new ReplaceCharacterPlugin());
