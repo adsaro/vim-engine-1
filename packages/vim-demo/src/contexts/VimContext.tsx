@@ -46,6 +46,7 @@ import {
   DeleteOperatorPlugin,
   InsideWordTextObject,
   InsideQuoteTextObject,
+  AroundQuoteTextObject,
   InsideCurlyBraceTextObject,
   InsideParenTextObject,
   InsideSquareBracketTextObject,
@@ -159,6 +160,7 @@ export function VimProvider({ children, initialContent = '' }: VimProviderProps)
     // Register text object plugins
     engine.registerPlugin(new InsideWordTextObject());
     engine.registerPlugin(new InsideQuoteTextObject());
+    engine.registerPlugin(new AroundQuoteTextObject());
     engine.registerPlugin(new InsideCurlyBraceTextObject());
     engine.registerPlugin(new InsideParenTextObject());
     engine.registerPlugin(new InsideSquareBracketTextObject());
