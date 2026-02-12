@@ -48,6 +48,7 @@ import {
   InsideQuoteTextObject,
   AroundQuoteTextObject,
   InsideCurlyBraceTextObject,
+  AroundCurlyBraceTextObject,
   InsideParenTextObject,
   InsideSquareBracketTextObject,
   InsideAngleBracketTextObject,
@@ -162,6 +163,7 @@ export function VimProvider({ children, initialContent = '' }: VimProviderProps)
     engine.registerPlugin(new InsideQuoteTextObject());
     engine.registerPlugin(new AroundQuoteTextObject());
     engine.registerPlugin(new InsideCurlyBraceTextObject());
+    engine.registerPlugin(new AroundCurlyBraceTextObject());
     engine.registerPlugin(new InsideParenTextObject());
     engine.registerPlugin(new InsideSquareBracketTextObject());
     engine.registerPlugin(new InsideAngleBracketTextObject());
